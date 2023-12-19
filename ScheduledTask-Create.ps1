@@ -1,5 +1,5 @@
-Write-Output "Creating scheduled task for Thorium WinUpdater..."
-$Title = "Thorium WinUpdater"
+Write-Output "Creating scheduled task for Chromium WinUpdater..."
+$Title = "Chromium WinUpdater"
 $Host.UI.RawUI.WindowTitle = $Title
 If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
 {
@@ -11,7 +11,7 @@ If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
   Exit
 }
 
-$Action   = New-ScheduledTaskAction -Execute "Thorium-WinUpdater.exe" -Argument "/Scheduled" -WorkingDirectory "$PSScriptRoot"
+$Action   = New-ScheduledTaskAction -Execute "Chromium-WinUpdater.exe" -Argument "/Scheduled" -WorkingDirectory "$PSScriptRoot"
 $Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -RunOnlyIfNetworkAvailable
 $24Hours  = New-ScheduledTaskTrigger -Once -At (Get-Date -Minute 0 -Second 0).AddHours(1) -RepetitionInterval (New-TimeSpan -Hours 24)
 $AtLogon  = New-ScheduledTaskTrigger -AtLogOn

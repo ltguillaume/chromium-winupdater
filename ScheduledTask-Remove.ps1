@@ -1,5 +1,5 @@
-Write-Output "Removing scheduled task for Thorium WinUpdater..."
-$Title = "Thorium WinUpdater"
+Write-Output "Removing scheduled task for Chromium WinUpdater..."
+$Title = "Chromium WinUpdater"
 $Host.UI.RawUI.WindowTitle = $Title
 If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
 {

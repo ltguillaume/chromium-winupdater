@@ -1,14 +1,14 @@
-<img src="Thorium-WinUpdaterBlue.ico" width="64">
+<img src="Chromium-WinUpdaterBlue.ico" width="64">
 <img src="AHK.png" width="64">
 
-# Building Thorium-WinUpdater.exe
+# Building Chromium-WinUpdater.exe
 
 Building this project requires [AutoHotKey 1.1](https://www.autohotkey.com/). \
 AutoHotKey is a free and open-source custom scripting language for Microsoft Windows, for creating simple applications, macros, or (as the name implies) custom, OS level keyboard shortcuts.
 
 Optionally, [Resource Hacker](http://www.angusj.com/resourcehacker/#download) can be installed to remove all unused icons from the built executable.
 
-The [.ahk file](Thorium-WinUpdater.ahk) is the main script. \
+The [.ahk file](Chromium-WinUpdater.ahk) is the main script. \
 The PS1 files are PowerShell scripts for adding/removing a scheduled task that runs the updater. \
 The .ico files are used in the UI of the final .exe
 

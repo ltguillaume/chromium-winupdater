@@ -1,15 +1,16 @@
-; Thorium WinUpdater - https://codeberg.org/ltguillaume/thorium-winupdater
+; TODO: Check paths via registry or hardcode A_ProgramFiles and A_ProgramW6432
+
+; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
 ;@Ahk2Exe-SetFileVersion 1.8.1
 ;@Ahk2Exe-SetProductVersion 1.8.1
 
 ;@Ahk2Exe-Base Unicode 32*
-;@Ahk2Exe-SetCompanyName The Chromium Authors and Alex313031
 ;@Ahk2Exe-SetCopyright ltguillaume and Alex313031
-;@Ahk2Exe-SetDescription Thorium Browser Windows Updater
-;@Ahk2Exe-SetMainIcon Thorium-WinUpdater.ico
-;@Ahk2Exe-AddResource Thorium-WinUpdaterLogo.ico, 160
-;@Ahk2Exe-SetOrigFilename Thorium-WinUpdater.exe
-;@Ahk2Exe-SetProductName Thorium WinUpdater
+;@Ahk2Exe-SetDescription Chromium Browser Windows Updater
+;@Ahk2Exe-SetMainIcon Chromium-WinUpdater.ico
+;@Ahk2Exe-AddResource Chromium-WinUpdaterBlue.ico, 160
+;@Ahk2Exe-SetOrigFilename Chromium-WinUpdater.exe
+;@Ahk2Exe-SetProductName Chromium WinUpdater
 ;@Ahk2Exe-PostExec ResourceHacker.exe -open "%A_WorkFileName%" -save "%A_WorkFileName%" -action delete -mask ICONGROUP`,206`, ,,,,1
 ;@Ahk2Exe-PostExec ResourceHacker.exe -open "%A_WorkFileName%" -save "%A_WorkFileName%" -action delete -mask ICONGROUP`,207`, ,,,,1
 ;@Ahk2Exe-PostExec ResourceHacker.exe -open "%A_WorkFileName%" -save "%A_WorkFileName%" -action delete -mask ICONGROUP`,208`, ,,,,1
@@ -18,13 +19,12 @@
 #SingleInstance, Off
 
 Global Args       := ""
-, Browser         := "Thorium"
+, Browser         := "Chromium"
 , ExtractDir      := A_Temp "\" Browser "-Extracted"
-, BrowserExe      := "thorium.exe"
+, BrowserExe      := "chrome.exe"
 , BrowserPortable := "Bin\" BrowserExe
-, PortableExe     := A_ScriptDir "\" Browser "-Portable.exe"
+;, PortableExe     := A_ScriptDir "\" Browser "-Portable.exe"
 , ConnectCheckUrl := "https://github.com/manifest.json"
-, ReleaseApiUrl   := "https://api.github.com/repos/Alex313031/Thorium-{}/releases/latest"
 , SelfUpdateZip   := Browser "-WinUpdater.zip"
 , SetupParams     := "--do-not-launch-chrome"
 , TaskCreateFile  := "ScheduledTask-Create.ps1"
@@ -36,7 +36,7 @@ Global Args       := ""
 , SettingTask     := A_Args[1] = "/CreateTask" Or A_Args[1] = "/RemoveTask"
 , ChangesMade     := False
 , Done            := False
-, IniFile, LocalAppData, Path, ProgramW6432, Repo, Build, UpdateSelf, Task, CurrentUpdaterVersion, ReleaseInfo, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton
+, IniFile, LocalAppData, Path, ProgramW6432, Repo, Build, UpdateSelf, Task, CurrentUpdaterVersion, ReleaseApiUrl, ReleaseInfo, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton
 
 ; Strings
 Global _Updater       := Browser " WinUpdater"
@@ -104,6 +104,8 @@ Init() {
 	SplitPath, A_ScriptFullPath,,,, BaseName
 	IniFile := A_ScriptDir "\" BaseName ".ini"
 	IniRead, UpdateSelf, %IniFile%, Settings, UpdateSelf, 1	; Using "False" in .ini causes If (UpdateSelf) to be True
+	IniRead, ReleaseApiUrl, %IniFile%, Settings, ReleaseApiUrl, https://api.github.com/repos/macchrome/winchrome/releases/latest	; Defaults to Ungoogled Chromium
+	IniWrite, %ReleaseApiUrl%, %IniFile%, Settings, ReleaseApiUrl
 	SetWorkingDir, %A_Temp%
 	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%
 	Menu, Tray, NoStandard
@@ -117,12 +119,12 @@ Init() {
 	Gui, +HwndGuiHwnd -MaximizeBox
 	Gui, Color, 23222B
 	Gui, Add, Picture, x12 y10 w64 h64 Icon2, %A_ScriptFullPath%
-	Gui, Font, cC58FC1 s22 w700, Segoe UI
+	Gui, Font, c669DF6 s22 w700, Segoe UI
 	Gui, Add, Text, x85 y4 BackgroundTrans, %Browser%
 	Gui, Font, cFFFFFF s9 w700
-	Gui, Add, Text, vVerField x86 y42 w222 BackgroundTrans, `n
+	Gui, Add, Text, vVerField x86 y42 w222 BackgroundTrans
 	Gui, Font, w400
-	Gui, Add, Progress, vProgField w217 h20 cB483BB, 10
+	Gui, Add, Progress, vProgField w217 h20 c669DF6, 10
 	Gui, Add, Text, vLogField w222
 	Gui, Margin,, 15
 	Gui, Show, Hide, %_Updater% %CurrentUpdaterVersion%
@@ -182,8 +184,8 @@ CheckPaths() {
 	Else {
 		IniRead, Path, %IniFile%, Settings, Path, 0	; Need to use 0, because False would become a string
 		If (!Path) {
-			RegRead, Path, HKLM\SOFTWARE\Clients\StartMenuInternet\%Browser%\shell\open\command
-			If (ErrorLevel)
+;			RegRead, Path, HKLM\SOFTWARE\Clients\StartMenuInternet\%Browser%\shell\open\command	; %Browser% should be like "Chromium.WEQ36YVLUPQM5N24EOOSTXAUJM"
+;			If (ErrorLevel)
 				Path = %LocalAppData%\%Browser%\Application\%BrowserExe%
 		}
 		Path := Trim(Path, """")	; FileExist chokes on double quotes
@@ -294,10 +296,11 @@ GetCurrentVersion() {
 
 	GetCurrentBuild()
 
-	GuiControl,, VerField, %CurrentVersion% (%Repo%%Build%)
+	GuiControl,, VerField, %CurrentVersion% ;(%Repo%%Build%)
 }
 
 GetCurrentBuild() {
+	Return ""
 	SplitPath, Path,, PathDir
 	VerFile := PathDir "\thor_ver"
 ;MsgBox, %VerFile%
@@ -333,7 +336,7 @@ GetNewVersion() {
 }
 
 StartUpdate() {
-	GuiControl,, VerField, %CurrentVersion% %_To%`n%NewVersion% (%Repo%%Build%)
+	GuiControl,, VerField, %CurrentVersion% %_To% %NewVersion% ;(%Repo%%Build%)
 	If (Portable Or !Scheduled)
 		GuiShow()
 
@@ -363,9 +366,9 @@ WaitForClose() {
 
 DownloadUpdate() {
 	; Get setup file URL
-	FilenameEnd := Build (IsPortable ? "\.zip" : "installer\.exe")
-;FileAppend, %ReleaseInfo%, %A_Temp%\ReleaseInfo.txt
-	RegExMatch(ReleaseInfo, "i)""name"":""(" Browser ".{1,30}?" FilenameEnd ")"".*?""browser_download_url"":""(.+?)""", DownloadUrl)
+	FilenameEnd := Build (IsPortable ? "\.7z" : "installer\.exe")
+FileAppend, %ReleaseInfo%, %A_Temp%\ReleaseInfo.txt
+	RegExMatch(ReleaseInfo, "i)""name"":""(.{0,15}?" Browser ".{1,30}?" FilenameEnd ")"".*?""browser_download_url"":""(.+?)""", DownloadUrl)
 ;MsgBox, Downloading`n%DownloadUrl2%`nto`n%DownloadUrl1%
 	If (!DownloadUrl1 Or !DownloadUrl2)
 		Die(_FindUrlError)
@@ -403,8 +406,8 @@ DownloadUpdate() {
 			Install()
 ;		Else {
 ;			Progress(_Downloaded)
-;			Gui, Add, Button, vUpdateButton gInstall w148 x86 y125 Default, %_StartUpdate%
-;			GuiControl, Move, TaskSetField, y161
+;			Gui, Add, Button, vUpdateButton gInstall w148 x86 y110 Default, %_StartUpdate%
+;			GuiControl, Move, TaskSetField, y146
 ;			GuiShow(True)	; Wait for user action
 ;		}
 	}
@@ -416,11 +419,14 @@ ExtractPortable() {
 	If (!Extract(A_Temp "\" SetupFile, ExtractDir))
 		Die(_ExtractionError)
 
-;	Loop, Files, %ExtractDir%\*, D
-;	{
+	SetWorkingDir, %ExtractDir%
+	Loop, Files, *, D
+	{
 ;MsgBox, Traversing %A_LoopFilePath%
+		If (InStr(FileExist(A_LoopFilePath), "D"))
+			FileMoveDir, %A_LoopFilePath%, bin, R
+	}
 ;		SetWorkingDir, %A_LoopFilePath%	; Enter the first folder of the extracted archive
-		SetWorkingDir, %ExtractDir%
 		Loop, Files, *, R
 		{
 			If (A_LoopFileName = UpdaterFile)
@@ -472,7 +478,7 @@ Install() {
 
 WriteReport() {
 	; Report update if completed
-	Log("LastUpdate", "(" Repo Build ")", True)
+	Log("LastUpdate",, True)
 	Log("LastUpdateFrom", CurrentVersion)
 	Log("LastUpdateTo", NewVersion)
 	Log("LastResult", _IsUpdated)
@@ -494,12 +500,12 @@ Exit(Restart = False) {
 		Gui, Destroy
 
 ; Clean up
-	If (RunningPortable And FileExist(PortableExe)) {
-		A_Args.RemoveAt(1)	; Remove "/Portable" from array
-		CheckArgs()
+;	If (RunningPortable And FileExist(PortableExe)) {
+;		A_Args.RemoveAt(1)	; Remove "/Portable" from array
+;		CheckArgs()
 ;MsgBox, %Args%
-		Run, %PortableExe% %Args%
-	}
+;		Run, %PortableExe% %Args%
+;	}
 	Log("LastRun",, True)
 	If (SetupFile) {
 		Sleep, 2000
@@ -509,6 +515,7 @@ Exit(Restart = False) {
 		FileRemoveDir, %ExtractDir%, 1
 	FileDelete, %A_ScriptFullPath%.wubak
 	FileDelete, %SelfUpdateZip%
+	FileDelete, 7zr.exe
 
 	If (Restart)
 		Run, % A_ScriptFullPath StrReplace(Args, "/Scheduled")
@@ -555,17 +562,9 @@ Download(URL) {
 Extract(From, To) {
 ;MsgBox, %From% to %To%
 	FileRemoveDir, %ExtractDir%, 1
-	FileCopyDir, %From%, %To%, 1
+	FileInstall, 7zr.exe, 7zr.exe, 0
+	RunWait, 7zr.exe x -o"%To%" "%From%",, Hide
 	Error := ErrorLevel
-	If (Error) {	; PowerShell fallback
-;MsgBox, Trying PowerShell fallback
-		FileRemoveDir, %ExtractDir%, 1
-		FileCreateDir, %ExtractDir%
-		SetWorkingDir, %To%
-		RunWait, powershell.exe -NoProfile -Command "Expand-Archive """%From%""" . -Force" -ErrorAction Stop,, Hide
-		Error := ErrorLevel
-		SetWorkingDir, %A_Temp%
-	}
 ;MsgBox, Extract(%From%, %To%) ErrorLevel = %Error%
 
 	Return !(Error <> 0)
@@ -577,7 +576,7 @@ GetLatestVersion() {
 	If (!ReleaseInfo)
 		Die(_DownloadJsonError)
 
-	RegExMatch(ReleaseInfo, "i)tag_name"":""v?(.+?)""", Release)
+	RegExMatch(ReleaseInfo, "i)tag_name"":"".{0,15}?-M(.+?)-r", Release)
 	LatestVersion := Release1
 	If (!LatestVersion)
 		Die(_JsonVersionError)
