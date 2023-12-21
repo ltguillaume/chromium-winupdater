@@ -227,7 +227,7 @@ SelfUpdate() {
 	If (!VerCompare(GetLatestVersion(), ">" CurrentUpdaterVersion))
 		Return
 
-RegExp := "i)name"":""" Browser "-WinUpdater.+?\.zip"".*?browser_download_url"":""(.*?)"""
+	RegExp := "i)name"":""" Browser "-WinUpdater.+?\.zip"".*?browser_download_url"":""(.*?)"""
 	RegExMatch(ReleaseInfo, RegExp, DownloadUrl)
 ;MsgBox, %DownloadUrl1%
 	If (!DownloadUrl1)
@@ -367,8 +367,8 @@ WaitForClose() {
 DownloadUpdate() {
 	; Get setup file URL
 	FilenameEnd := Build (IsPortable ? "\.7z" : "installer\.exe")
-FileAppend, %ReleaseInfo%, %A_Temp%\ReleaseInfo.txt
-	RegExMatch(ReleaseInfo, "i)""name"":""(.{0,15}?" Browser ".{1,30}?" FilenameEnd ")"".*?""browser_download_url"":""(.+?)""", DownloadUrl)
+;FileAppend, %ReleaseInfo%, %A_Temp%\ReleaseInfo.txt
+	RegExMatch(ReleaseInfo, "i)""name"":""(.{1,50}?" FilenameEnd ")"".*?""browser_download_url"":""(.+?)""", DownloadUrl)
 ;MsgBox, Downloading`n%DownloadUrl2%`nto`n%DownloadUrl1%
 	If (!DownloadUrl1 Or !DownloadUrl2)
 		Die(_FindUrlError)
@@ -576,7 +576,8 @@ GetLatestVersion() {
 	If (!ReleaseInfo)
 		Die(_DownloadJsonError)
 
-	RegExMatch(ReleaseInfo, "i)tag_name"":"".{0,15}?-M(.+?)-r", Release)
+	ReleaseExp := (Task = _Updater ? "i)tag_name"":""(.+?)""" : "i)tag_name"":"".{0,15}?-M(.+?)-r")
+	RegExMatch(ReleaseInfo, ReleaseExp, Release)
 	LatestVersion := Release1
 	If (!LatestVersion)
 		Die(_JsonVersionError)
