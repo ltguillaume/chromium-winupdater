@@ -26,20 +26,17 @@ An attempt to make updating Chromium for Windows much easier. This is a fork of 
   [Settings]
   UpdateSelf=0
   ```
-- Chromium by default downloads the [Ungoogled Chromium](https://github.com/macchrome/winchrome/releases) release by [Marmaduke](https://github.com/macchrome). You can change the API releases URL in the .ini file (specifically `macchrome` for the GitHub user and `winchrome` for the repository name):
-  ```ini
-  [Settings]
-  ReleaseApiUrl=https://api.github.com/repos/macchrome/winchrome/releases/latest
-  ```
-  _Obviously, don't add the line `[Settings]` twice_.
-- __NOTE:__ Chromium WinUpdater has not yet been tested with other releases, so just try it out and/or ask for help by creating an issue.
+- WinUpdater by default downloads the 64-bit release of [Ungoogled Chromium by Marmaduke](https://github.com/macchrome/winchrome/releases).  
+  Alternatively, you can use the (official?) [release by teeminus et al.](https://github.com/ungoogled-software/ungoogled-chromium/releases).  
+  To do this, copy/rename `Chromium-WinUpdater.template.ini` to `Chromium-WinUpdater.ini`, then uncomment the 3 lines of the desired alternative release.
+- __NOTE:__ WinUpdater has not been tested with other Chromium releases, but you can try changing the three variables and see if it works, or ask for help by creating an issue.
 
 ## Building
-- Requires [7-Zip](https://7-zip.org) console executable ([`7zr.exe`](https://7-zip.org/a/7zr.exe))
+- Requires [7-Zip](https://7-zip.org/download.html) standalone console version (`7za.exe` from the __7-Zip Extra__ download)
 - Requires [AutoHotKey 1.1](https://www.autohotkey.com/) \
   See [BUILDING.md](BUILDING.md)
 
 ## Credits
 * [The Chromium Project](https://www.chromium.org)
-* [Original icon](https://github.com/Alex313031/chromium/blob/main/logos/NEW/win/chromium.ico) by Alex Frick
-* [Original logo](https://github.com/Alex313031/chromium/blob/main/logos/STAGING/Chromium90_252.jpg) by Alex Frick
+* [Chromium icon](https://github.com/Alex313031/chromium/blob/main/logos/NEW/win/thorium.ico) by Alex Frick
+* [Chromium logo](https://github.com/Alex313031/chromium/blob/main/logos/STAGING/Thorium90_252.jpg) by Alex Frick

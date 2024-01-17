@@ -6,6 +6,8 @@
 Building this project requires [AutoHotKey 1.1](https://www.autohotkey.com/). \
 AutoHotKey is a free and open-source custom scripting language for Microsoft Windows, for creating simple applications, macros, or (as the name implies) custom, OS level keyboard shortcuts.
 
+Download the [7-Zip Extra](https://7-zip.org/download.html) archive and copy the 7-Zip standalone console version `7za.exe` next to `Chromium-WinUpdater.ahk`.
+
 Optionally, [Resource Hacker](http://www.angusj.com/resourcehacker/#download) can be installed to remove all unused icons from the built executable.
 
 The [.ahk file](Chromium-WinUpdater.ahk) is the main script. \
