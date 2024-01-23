@@ -27,7 +27,7 @@ An attempt to make updating Chromium for Windows much easier. This is a fork of 
   UpdateSelf=0
   ```
 - WinUpdater by default downloads the 64-bit release of [Ungoogled Chromium by Marmaduke](https://github.com/macchrome/winchrome/releases).  
-  Alternatively, you can use the (official?) [release by teeminus et al.](https://github.com/ungoogled-software/ungoogled-chromium/releases).  
+  Alternatively, you can use the (official?) [release by teeminus et al](https://github.com/ungoogled-software/ungoogled-chromium/releases).  
   To do this, copy/rename `Chromium-WinUpdater.template.ini` to `Chromium-WinUpdater.ini`, then uncomment the 3 lines of the desired alternative release.
 - __NOTE:__ WinUpdater has not been tested with other Chromium releases, but you can try changing the three variables and see if it works, or ask for help by creating an issue.
 

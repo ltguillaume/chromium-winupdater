@@ -2,8 +2,8 @@
 ;       - Version number is written through warning icon
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.8.2
-;@Ahk2Exe-SetProductVersion 1.8.2
+;@Ahk2Exe-SetFileVersion 1.8.3
+;@Ahk2Exe-SetProductVersion 1.8.3
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume and Alex313031
@@ -241,7 +241,7 @@ SelfUpdate() {
 	If (!VerCompare(GetLatestVersion(), ">" CurrentUpdaterVersion))
 		Return
 
-	RegExp := "i)name"":""" Browser "-WinUpdater.+?\.zip"".*?browser_download_url"":""(.*?)"""
+	RegExp := "i)name"":\s*""" Browser "-WinUpdater.+?\.zip"".*?browser_download_url"":\s*""(.*?)"""
 	RegExMatch(ReleaseInfo, RegExp, DownloadUrl)
 ;MsgBox, %DownloadUrl1%
 	If (!DownloadUrl1)
@@ -384,7 +384,7 @@ DownloadUpdate() {
 	Filename := StrReplace(FileName, "*", ".{0,50}?")
 ;MsgBox, %Filename%
 ;FileAppend, %ReleaseInfo%, %A_Temp%\ReleaseInfo.txt
-	RegExMatch(ReleaseInfo, "i)""name"":""(" Filename ")"".+?""browser_download_url"":""(.+?)""", DownloadUrl)
+	RegExMatch(ReleaseInfo, "i)""name"":\s*""(" Filename ")"".+?""browser_download_url"":\s*""(.+?)""", DownloadUrl)
 ;MsgBox, Downloading`n%DownloadUrl2%`nto`n%DownloadUrl1%
 	If (!DownloadUrl1 Or !DownloadUrl2)
 		Die(_FindUrlError)
@@ -401,7 +401,7 @@ DownloadUpdate() {
 
 VerifyChecksum() {	; Skipped
 	; Get checksum file
-;	RegExMatch(ReleaseInfo, "i)""name"":""sha256sums\.txt"",.*?""browser_download_url"":""(.+?)""", ChecksumUrl)
+;	RegExMatch(ReleaseInfo, "i)""name"":\s*""sha256sums\.txt"",.*?""browser_download_url"":\s*""(.+?)""", ChecksumUrl)
 ;	If (!ChecksumUrl1)
 ;		Die(_FindSumsUrlError)
 ;	Checksum := Download(ChecksumUrl1)
@@ -601,7 +601,7 @@ Extract(From, To) {
 ;MsgBox, %From% to %To%
 	FileRemoveDir, %ExtractDir%, 1
 	FileInstall, 7za.exe, 7za.exe, 0
-	RunWait, 7za.exe x -o"%To%" "%From%",, Hide
+	RunWait, 7za.exe x -y -o"%To%" "%From%",, Hide
 	Error := ErrorLevel
 ;MsgBox, Extract(%From%, %To%) ErrorLevel = %Error%
 
@@ -618,9 +618,10 @@ GetLatestVersion() {
 			Die(_DownloadJsonError)
 	}
 
-	ReleaseExp := (Task = _Updater ? "i)tag_name"":""(.+?)""" : "i)""name"":"".*?v?([\d\.]+).*?""")
+	ReleaseExp := (Task = _Updater ? "i)tag_name"":\s*""(.+?)""" : "i)""tag_name"":\s*"".*?v?([\d\.]+)(-M([\d\.]+))?.*?""")
 	RegExMatch(ReleaseInfo, ReleaseExp, Release)
-	LatestVersion := Release1
+	LatestVersion := (Release3 ? Release3 : Release1)
+;MsgBox, %LatestVersion%
 	If (!LatestVersion)
 		Die(_JsonVersionError)
 
