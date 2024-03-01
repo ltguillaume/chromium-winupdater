@@ -2,8 +2,8 @@
 ;       - Version number is written through warning icon
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.8.3
-;@Ahk2Exe-SetProductVersion 1.8.3
+;@Ahk2Exe-SetFileVersion 1.8.4
+;@Ahk2Exe-SetProductVersion 1.8.4
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume and Alex313031
@@ -622,8 +622,12 @@ GetLatestVersion() {
 	RegExMatch(ReleaseInfo, ReleaseExp, Release)
 	LatestVersion := (Release3 ? Release3 : Release1)
 ;MsgBox, %LatestVersion%
-	If (!LatestVersion)
-		Die(_JsonVersionError)
+	If (!LatestVersion) {
+		If (Task = _Updater And InStr(ReleaseInfo, "{") <> 1)	; Codeberg non-JSON error page
+			Return CurrentUpdaterVersion
+		Else
+			Die(_JsonVersionError)
+	}
 
 	Return LatestVersion
 }
