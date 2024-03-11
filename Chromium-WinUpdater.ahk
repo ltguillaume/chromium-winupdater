@@ -2,8 +2,8 @@
 ;       - Version number is written through warning icon
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.8.4
-;@Ahk2Exe-SetProductVersion 1.8.4
+;@Ahk2Exe-SetFileVersion 1.8.5
+;@Ahk2Exe-SetProductVersion 1.8.5
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume and Alex313031
@@ -57,6 +57,7 @@ Global _Updater       := Browser " WinUpdater"
 , _GetBuildError      := "Could not determine the build type of " Browser "."
 , _GetVersionError    := "Could not determine the current version of`n{}"
 , _DownloadJsonError  := "Could not download the {Task} releases file."
+, _ApiRateLimit       := "GitHub's API rate limit was exceeded for your IP. You can try again later."
 , _JsonVersionError   := "Could not get version info from the {Task} releases file."
 , _FindUrlError       := "Could not find the URL to download {Task}."
 , _Downloading        := "Downloading new version..."
@@ -315,19 +316,6 @@ GetCurrentVersion() {
 
 GetCurrentBuild() {
 	Return ""
-	SplitPath, Path,, PathDir
-	VerFile := PathDir "\thor_ver"
-;MsgBox, %VerFile%
-	FileReadLine, Repo, %VerFile%, 1
-	If (ErrorLevel)
-		Die(_GetBuildError)
-	If (Repo = "AVX")	; Legacy
-		Repo := "Win"
-	If (Repo <> "Win7")
-		Return
-	FileReadLine, Build, %VerFile%, 2
-	If (!ErrorLevel)
-		Build := "_" Build
 }
 
 CheckConnection() {
@@ -625,7 +613,14 @@ GetLatestVersion() {
 	If (!LatestVersion) {
 		If (Task = _Updater And InStr(ReleaseInfo, "{") <> 1)	; Codeberg non-JSON error page
 			Return CurrentUpdaterVersion
-		Else
+		Else If (InStr(ReleaseInfo, "API rate limit exceeded")) {	; GitHub API rate limit
+			If (!Scheduled)
+				Die(_ApiRateLimit)
+			Else {
+				Log("LastResult", _ApiRateLimit)
+				Exit()
+			}
+		} Else
 			Die(_JsonVersionError)
 	}
 
