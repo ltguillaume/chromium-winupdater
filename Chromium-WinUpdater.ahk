@@ -110,6 +110,8 @@ Init() {
 	IniRead, UpdateSelf, %IniFile%, Settings, UpdateSelf, 1	; Using "False" in .ini causes If (UpdateSelf) to be True
 	IniRead, ReleaseApiUrl, %IniFile%, Settings, ReleaseApiUrl, https://api.github.com/repos/macchrome/winchrome/releases/latest	; Defaults to Ungoogled Chromium
 	IniRead, InstallerFile, %IniFile%, Settings, InstallerFile, *.exe
+	If (InstallerFile = "NONE")
+		IsPortable := True
 	IniRead, PortableFile, %IniFile%, Settings, PortableFile, *.7z
 	IniWrite, %UpdateSelf%, %IniFile%, Settings, UpdateSelf
 	IniWrite, %ReleaseApiUrl%, %IniFile%, Settings, ReleaseApiUrl
