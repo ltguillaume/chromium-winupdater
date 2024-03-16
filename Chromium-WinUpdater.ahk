@@ -1,9 +1,8 @@
 ; TODO: - Check paths via registry or hardcode A_ProgramFiles and A_ProgramW6432
-;       - Version number is written through warning icon
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.8.5
-;@Ahk2Exe-SetProductVersion 1.8.5
+;@Ahk2Exe-SetFileVersion 1.8.6
+;@Ahk2Exe-SetProductVersion 1.8.6
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume and Alex313031
@@ -133,7 +132,7 @@ Init() {
 	Gui, Font, c669DF6 s22 w700, Segoe UI
 	Gui, Add, Text, x85 y4 BackgroundTrans, %Browser%
 	Gui, Font, cFFFFFF s9 w700
-	Gui, Add, Text, vVerField x86 y42 w222 BackgroundTrans
+	Gui, Add, Text, vVerField x86 y42 w222 BackgroundTrans, `n
 	Gui, Font, w400
 	Gui, Add, Progress, vProgField w217 h20 c669DF6, 10
 	Gui, Add, Text, vLogField w222
@@ -313,11 +312,12 @@ GetCurrentVersion() {
 
 	GetCurrentBuild()
 
-	GuiControl,, VerField, %CurrentVersion% ;(%Repo%%Build%)
+	GuiControl,, VerField, %CurrentVersion%
 }
 
 GetCurrentBuild() {
-	Return ""
+	RegExMatch(ReleaseApiUrl, "i)/repos/([^/]+)/", User)
+	Build := User1
 }
 
 CheckConnection() {
@@ -340,7 +340,7 @@ GetNewVersion() {
 }
 
 StartUpdate() {
-	GuiControl,, VerField, %CurrentVersion% %_To% %NewVersion% ;(%Repo%%Build%)
+	GuiControl,, VerField, %CurrentVersion% %_To%`n%NewVersion% (%Build%)
 	If (Portable Or !Scheduled)
 		GuiShow()
 
@@ -416,8 +416,8 @@ RunUpdate() {
 			Install()
 ;		Else {
 ;			Progress(_Downloaded)
-;			Gui, Add, Button, vUpdateButton gInstall w148 x86 y110 Default, %_StartUpdate%
-;			GuiControl, Move, TaskSetField, y146
+;			Gui, Add, Button, vUpdateButton gInstall w148 x86 y125 Default, %_StartUpdate%
+;			GuiControl, Move, TaskSetField, y161
 ;			GuiShow(True)	; Wait for user action
 ;		}
 	}
@@ -500,7 +500,7 @@ PreventRunningWhileUpdating() {
 
 WriteReport() {
 	; Report update if completed
-	Log("LastUpdate",, True)
+	Log("LastUpdate", "(" Build ")", True)
 	Log("LastUpdateFrom", CurrentVersion)
 	Log("LastUpdateTo", NewVersion)
 	Log("LastResult", _IsUpdated)
