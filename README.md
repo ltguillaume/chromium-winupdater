@@ -25,9 +25,14 @@ An attempt to make updating Chromium for Windows much easier. This is a fork of 
   To do this, copy/rename `Chromium-WinUpdater.template.ini` to `Chromium-WinUpdater.ini`, then uncomment the 3 lines of the desired alternative release (by removing the `;`).
 - __NOTE:__ WinUpdater has not been tested with other Chromium releases, but you can try changing the three variables and see if it works, or ask for help by creating an issue.
 - `Chromium-WinUpdater.ini` contains a `[Log]` section that shows the results of the last update check and update action.
-- Chromium WinUpdater also updates itself automatically, so you won't have to check for new releases here. If you prefer to update WinUpdater yourself, add the following to the .ini file:
+- Sometimes Windows will show a **Security Alert** dialog: `Revocation information for the Security certificate for this site is not available`. This may happen if the website certificate has been recently renewed, _or_ if the website has actually been compromised. WinUpdater should show you a dialog on top of that, asking you if you want to continue or not. If this happens often, you can tell WinUpdater to ignore these checks by setting `IgnoreCrlErrors` to `1` in the .ini file under `[Settings]`:
   ```ini
   [Settings]
+  IgnoreCrlErrors=1
+  ```
+- Chromium WinUpdater also updates itself automatically, so you won't have to check for new releases here. If you prefer to update it manually, set `UpdateSelf` to `0` in the .ini file under `[Settings]`:
+  ```ini
+	[Settings]
   UpdateSelf=0
   ```
 

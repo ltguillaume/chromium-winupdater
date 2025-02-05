@@ -1,8 +1,8 @@
 ; TODO: - Check paths via registry or hardcode A_ProgramFiles and A_ProgramW6432
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.8.6
-;@Ahk2Exe-SetProductVersion 1.8.6
+;@Ahk2Exe-SetFileVersion 1.9.1
+;@Ahk2Exe-SetProductVersion 1.9.1
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume and Alex313031
@@ -37,7 +37,7 @@ Global Args       := ""
 , SettingTask     := A_Args[1] = "/CreateTask" Or A_Args[1] = "/RemoveTask"
 , ChangesMade     := False
 , Done            := False
-, IniFile, LocalAppData, Path, ProgramW6432, Repo, Build, UpdateSelf, Task, CurrentUpdaterVersion, ReleaseApiUrl, InstallerFile, PortableFile, ReleaseInfo, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton
+, IniFile, LocalAppData, Path, ProgramW6432, Repo, Build, IgnoreCrlErrors, UpdateSelf, Task, CurrentDomain, CurrentUpdaterVersion, ReleaseApiUrl, InstallerFile, PortableFile, ReleaseInfo, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton
 
 ; Strings
 Global _Updater       := Browser " WinUpdater"
@@ -55,6 +55,7 @@ Global _Updater       := Browser " WinUpdater"
 , _CopyError          := "Could not copy {}"
 , _GetBuildError      := "Could not determine the build type of " Browser "."
 , _GetVersionError    := "Could not determine the current version of`n{}"
+, _CrlError           := "Could not determine whether the certificate for {} is valid. This may happen if the website certificate has been recently renewed OR if the website has actually been compromised.`nContinue anyway?"
 , _DownloadJsonError  := "Could not download the {Task} releases file."
 , _ApiRateLimit       := "GitHub's API rate limit was exceeded for your IP. You can try again later."
 , _JsonVersionError   := "Could not get version info from the {Task} releases file."
@@ -106,12 +107,14 @@ Init() {
 	EnvGet, LocalAppData, LocalAppData
 	SplitPath, A_ScriptFullPath,,,, BaseName
 	IniFile := A_ScriptDir "\" BaseName ".ini"
+	IniRead, IgnoreCrlErrors, %IniFile%, Settings, IgnoreCrlErrors, 0
 	IniRead, UpdateSelf, %IniFile%, Settings, UpdateSelf, 1	; Using "False" in .ini causes If (UpdateSelf) to be True
 	IniRead, ReleaseApiUrl, %IniFile%, Settings, ReleaseApiUrl, https://api.github.com/repos/macchrome/winchrome/releases/latest	; Defaults to Ungoogled Chromium
 	IniRead, InstallerFile, %IniFile%, Settings, InstallerFile, *.exe
 	If (InstallerFile = "NONE")
 		IsPortable := True
 	IniRead, PortableFile, %IniFile%, Settings, PortableFile, *.7z
+	IniWrite, %IgnoreCrlErrors%, %IniFile%, Settings, IgnoreCrlErrors
 	IniWrite, %UpdateSelf%, %IniFile%, Settings, UpdateSelf
 	IniWrite, %ReleaseApiUrl%, %IniFile%, Settings, ReleaseApiUrl
 	IniWrite, %InstallerFile%, %IniFile%, Settings, InstallerFile
@@ -331,7 +334,7 @@ GetNewVersion() {
 	NewVersion := GetLatestVersion()
 ;MsgBox, ReleaseInfo = %ReleaseInfo%`nCurrentVersion = %CurrentVersion%`nNewVersion = %NewVersion%
 	IniRead, LastUpdateTo, %IniFile%, Log, LastUpdateTo, False
-	If (NewVersion = CurrentVersion) {
+	If (!VerCompare(NewVersion, ">" CurrentVersion)) {
 		Progress(_NoNewVersion, True)
 		Log("LastResult", _NoNewVersion)
 		Return False
@@ -435,7 +438,7 @@ ExtractPortable() {
 	If (!FileExist("chrome.exe")) {
 		Loop, Files, *, D
 		{
-			If FileExist(A_LoopFilePath "\chrome.exe") {
+			If (FileExist(A_LoopFilePath "\chrome.exe")) {
 				SetWorkingDir, %A_LoopFilePath%
 				Break
 			}
@@ -481,7 +484,7 @@ Install() {
 ;		WriteReport()
 ;	Else {
 ;		MsgBox, 52, %_Updater%, %_SilentUpdateError%
-;		IfMsgBox No
+;		IfMsgBox, No
 ;			Progress(_UpdateError, True)
 ;		Else {
 			RunWait, %SetupFile% %SetupParams%,, UseErrorLevel
@@ -522,12 +525,6 @@ Exit(Restart = False) {
 		Gui, Destroy
 
 ; Clean up
-;	If (RunningPortable And FileExist(PortableBrowser)) {
-;		A_Args.RemoveAt(1)	; Remove "/Portable" from array
-;		CheckArgs()
-;MsgBox, %Args%
-;		Run, %PortableBrowser% %Args%
-;	}
 	Log("LastRun",, True)
 	If (SetupFile) {
 		Sleep, 2000
@@ -535,7 +532,10 @@ Exit(Restart = False) {
 	}
 	If (IsPortable)
 		FileRemoveDir, %ExtractDir%, 1
-	FileDelete, %A_ScriptFullPath%.wubak
+	If (FileExist(A_ScriptFullPath ".wubak") And !FileExist(A_ScriptFullPath))
+		FileMove, %A_ScriptFullPath%.wubak, %A_ScriptFullPath%
+	Else
+		FileDelete, %A_ScriptFullPath%.wubak
 	FileDelete, %SelfUpdateZip%
 	If (FileExist(Path ".wubak")) {
 		If (FileExist(Path))
@@ -547,6 +547,12 @@ Exit(Restart = False) {
 
 	If (Restart)
 		Run, % A_ScriptFullPath StrReplace(Args, "/Scheduled")
+;	Else If (IsPortable And RunningPortable) {
+;		A_Args.RemoveAt(1)	; Remove "/Portable" from array
+;		CheckArgs()
+;MsgBox, %PortableBrowser% %Args%
+;		Run, %PortableBrowser% %Args%
+;	}
 	ExitApp
 }
 
@@ -575,15 +581,34 @@ Die(Error, Var = False, Show = True) {
 }
 
 Download(URL) {
+	CurrentDomain := SubStr(URL, 1, InStr(URL, "/",,, 3) - 1)
+	SetTimer, CrlCheck
 	Try {
 		Object := ComObjCreate("Msxml2.XMLHTTP")
 		Object.open("GET", URL, false)
 		Object.send()
 		Result := Object.responseText
 ;MsgBox, %Result%
-		Return Result
 	} Catch {
-		Return False
+		Result := False
+	}
+	SetTimer, CrlCheck, Delete
+	CurrentDomain := ""
+	Return Result
+}
+
+CrlCheck() {
+	If (WinExist("ahk_exe " UpdaterFile " ahk_class #32770")) {
+		If (!IgnoreCrlErrors) {
+			Msg := StrReplace(_CrlError, "{}", CurrentDomain)
+			MsgBox, 52, %_Updater%, %Msg%
+			IfMsgBox, No
+			{
+				ControlClick, Button2	; Abort
+				Return
+			}
+		}
+		ControlClick, Button1	; Continue
 	}
 }
 
