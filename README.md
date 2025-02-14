@@ -32,7 +32,7 @@ An attempt to make updating Chromium for Windows much easier. This is a fork of 
   ```
 - Chromium WinUpdater also updates itself automatically, so you won't have to check for new releases here. If you prefer to update it manually, set `UpdateSelf` to `0` in the .ini file under `[Settings]`:
   ```ini
-	[Settings]
+  [Settings]
   UpdateSelf=0
   ```
 
