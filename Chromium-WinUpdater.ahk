@@ -121,8 +121,8 @@ Init() {
 	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%
 	Menu, Tray, NoStandard
 	Menu, Tray, Add, Show, TrayAction
-;	Menu, Tray, Add, Portable, TrayAction
-	Menu, Tray, Add, WinUpdater, TrayAction
+;	Menu, Tray, Add, Portable Help, TrayAction
+	Menu, Tray, Add, WinUpdater Help, TrayAction
 	Menu, Tray, Add, Exit, TrayAction
 	Menu, Tray, Default, Show
 
@@ -147,6 +147,12 @@ Init() {
 		}
 		GuiShow()
 	}
+	HotKey, IfWinActive, ahk_id %GuiHwnd%
+	HotKey, F1, Help
+}
+
+Help() {
+	TrayAction("WinUpdater", False, False)
 }
 
 TrayAction(ItemName, GuiEvent, LinkIndex) {
@@ -168,7 +174,7 @@ TrayAction(ItemName, GuiEvent, LinkIndex) {
 	If (LinkIndex = 2)
 		ItemName := "WinUpdater"
 
-	Url := "https://codeberg.org/ltguillaume/" Browser "-" ItemName "#readme"
+	Url := "https://codeberg.org/ltguillaume/" Browser "-" StrReplace(ItemName, " Help") "#readme"
 	Try Run, %Url%
 	Catch {
 		RegRead, DefBrowser, HKCR, .html
@@ -197,14 +203,14 @@ CheckPaths() {
 		If (!Path) {
 ;			RegRead, Path, HKLM\SOFTWARE\Clients\StartMenuInternet\%Browser%\shell\open\command	; %Browser% should be like "Chromium.WEQ36YVLUPQM5N24EOOSTXAUJM"
 ;			If (ErrorLevel)
-				Path = %LocalAppData%\%Browser%\Application\%BrowserExe%
+				Path := LocalAppData "\" Browser "\Application\" BrowserExe
 		}
 		Path := Trim(Path, """")	; FileExist chokes on double quotes
 
-		If (!FileExist(Path) And FileExist(Path ".wubak")) {
-;MsgBox, Restoring from .wubak
-			FileMove, %Path%.wubak, %Path%
-			If (!FileExist(Path) And !A_IsAdmin And !Portable)
+		If (FileExist(Path ".wubak")) {
+;MsgBox, Previous update may have been interrupted, restoring chrome.exe.wubak
+			FileMove, %Path%.wubak, %Path%, 1
+			If (ErrorLevel And !A_IsAdmin And !Portable)
 				RunElevated()
 		}
 		If (FileExist(Path) And (InStr(Path, ProgramW6432) Or InStr(Path, A_ProgramFiles)))
@@ -213,6 +219,7 @@ CheckPaths() {
 			Unelevate(True)
 	}
 ;MsgBox, Path = %Path%`nSetupParams = %SetupParams%
+	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%`n%Path%
 
 	If (WorkDir = ".")
 		WorkDir := A_ScriptDir
@@ -794,7 +801,7 @@ Log(Key, Msg = "", PrefixTime = False) {
 Notify(Msg, Ver = 0, Delay = 0) {
 	If (!Ver)
 		Ver := NewVersion
-	Menu, Tray, Tip, %Msg%
+	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%`n%Path%`n`n%Msg%
 	If (Scheduled Or Delay) {
 		TrayTip, %Msg%, v%Ver%,, 16
 		Sleep, %Delay%
@@ -807,7 +814,7 @@ Progress(Msg, End = False) {
 		GuiControl,, ProgField, 100
 	Else If (Msg <> _NewVersionFound)
 		GuiControl,, ProgField, +15
-	Menu, Tray, Tip, %Msg%
+	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%`n%Path%`n`n%Msg%
 
 	GuiControlGet, Prog,, ProgField
 	Done := Prog >= 100
