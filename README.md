@@ -35,6 +35,12 @@ An attempt to make updating Chromium for Windows much easier. This is a fork of 
   [Settings]
   UpdateSelf=0
   ```
+- If for some reason WinUpdater is not able to use the user's default `%Temp%` folder for downloading and extracting files, you can specify an alternative working directory by setting `WorkDir` in the .ini file under `[Settings]`:
+  ```ini
+  [Settings]
+  WorkDir=D:\Temp
+  ```
+  To specify the directory of `Chromium-WinUpdater.exe`, type `WorkDir=.`.
 
 ## Building
 - Requires [7-Zip](https://7-zip.org/download.html) standalone console version (`7za.exe` from the __7-Zip Extra__ download)
