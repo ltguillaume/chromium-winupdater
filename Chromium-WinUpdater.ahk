@@ -53,7 +53,7 @@ Global _Updater       := Browser " WinUpdater"
 , _CopyError          := "Could not copy {}"
 , _GetBuildError      := "Could not determine the build type of " Browser "."
 , _GetVersionError    := "Could not determine the current version of`n{}"
-, _CrlError           := "The server certificate revocation check for {} has failed. Right-click on WinUpdater's tray icon, then ""WinUpdater"" for more info. Continue anyway?"
+, _CrlError           := "The server certificate revocation check for {} has failed. Right-click on WinUpdater's tray icon, then ""WinUpdater Help"" for more info.`nContinue anyway?"
 , _DownloadJsonError  := "Could not download the {Task} releases file."
 , _ApiRateLimit       := "GitHub's API rate limit was exceeded for your IP. You can try again later."
 , _JsonVersionError   := "Could not get version info from the {Task} releases file."
@@ -147,6 +147,7 @@ Init() {
 		}
 		GuiShow()
 	}
+
 	HotKey, IfWinActive, ahk_id %GuiHwnd%
 	HotKey, F1, Help
 }
@@ -208,8 +209,8 @@ CheckPaths() {
 ;			If (ErrorLevel)
 				Path := LocalAppData "\" Browser "\Application\" BrowserExe
 		}
-		Path := Trim(Path, """")	; FileExist chokes on double quotes
 
+		Path := Trim(Path, """")	; FileExist chokes on double quotes
 		If (FileExist(Path ".wubak")) {
 ;MsgBox, Previous update may have been interrupted, restoring chrome.exe.wubak
 			FileMove, %Path%.wubak, %Path%, 1
