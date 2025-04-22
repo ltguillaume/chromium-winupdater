@@ -12,8 +12,8 @@ If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 }
 
 $Action   = New-ScheduledTaskAction -Execute "Chromium-WinUpdater.exe" -Argument "/Scheduled" -WorkingDirectory "$PSScriptRoot"
-$Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -RunOnlyIfNetworkAvailable
-$24Hours  = New-ScheduledTaskTrigger -Once -At (Get-Date -Minute 0 -Second 0).AddHours(1) -RepetitionInterval (New-TimeSpan -Hours 24)
+$Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DisallowHardTerminate -RunOnlyIfNetworkAvailable -StartWhenAvailable
+$24Hours  = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Hours 24)
 $AtLogon  = New-ScheduledTaskTrigger -AtLogOn
 $AtLogon.Delay = 'PT1M'
 $User     = If ($Args[0]) {$Args[0]} Else {[System.Security.Principal.WindowsIdentity]::GetCurrent().Name}

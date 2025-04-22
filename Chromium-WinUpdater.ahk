@@ -5,7 +5,7 @@
 ;@Ahk2Exe-SetProductVersion 1.9.2
 
 ;@Ahk2Exe-Base Unicode 32*
-;@Ahk2Exe-SetCopyright ltguillaume and Alex313031
+;@Ahk2Exe-SetCopyright ltguillaume
 ;@Ahk2Exe-SetDescription Chromium Browser Windows Updater
 ;@Ahk2Exe-SetMainIcon Chromium-WinUpdater.ico
 ;@Ahk2Exe-AddResource Chromium-WinUpdaterBlue.ico, 160
@@ -17,11 +17,9 @@
 
 #NoEnv
 #SingleInstance, Off
-SetWorkingDir, %A_ScriptDir%
 
 Global Args       := ""
 , Browser         := "Chromium"
-, ExtractDir      := A_Temp "\" Browser "-Extracted"
 , BrowserExe      := "chrome.exe"
 , PortableDir     := A_ScriptDir "\" (FileExist(BrowserExe) ? "" : FileExist("Bin\" BrowserExe) ? "Bin" : "Application")
 , PortableBrowser := PortableDir "\" BrowserExe
@@ -37,7 +35,7 @@ Global Args       := ""
 , SettingTask     := A_Args[1] = "/CreateTask" Or A_Args[1] = "/RemoveTask"
 , ChangesMade     := False
 , Done            := False
-, IniFile, LocalAppData, Path, ProgramW6432, Repo, Build, IgnoreCrlErrors, UpdateSelf, Task, CurrentDomain, CurrentUpdaterVersion, ReleaseApiUrl, InstallerFile, PortableFile, ReleaseInfo, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton
+, IniFile, LocalAppData, Path, ProgramW6432, WorkDir, ExtractDir, Repo, Build, IgnoreCrlErrors, UpdateSelf, Task, CurrentDomain, CurrentUpdaterVersion, ReleaseApiUrl, InstallerFile, PortableFile, ReleaseInfo, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton
 
 ; Strings
 Global _Updater       := Browser " WinUpdater"
@@ -109,6 +107,7 @@ Init() {
 	IniFile := A_ScriptDir "\" BaseName ".ini"
 	IniRead, IgnoreCrlErrors, %IniFile%, Settings, IgnoreCrlErrors, 0
 	IniRead, UpdateSelf, %IniFile%, Settings, UpdateSelf, 1	; Using "False" in .ini causes If (UpdateSelf) to be True
+	IniRead, WorkDir, %IniFile%, Settings, WorkDir, %A_Temp%
 	IniRead, ReleaseApiUrl, %IniFile%, Settings, ReleaseApiUrl, https://api.github.com/repos/macchrome/winchrome/releases/latest	; Defaults to Ungoogled Chromium
 	IniRead, InstallerFile, %IniFile%, Settings, InstallerFile, *.exe
 	If (InstallerFile = "NONE")
@@ -119,7 +118,6 @@ Init() {
 	IniWrite, %ReleaseApiUrl%, %IniFile%, Settings, ReleaseApiUrl
 	IniWrite, %InstallerFile%, %IniFile%, Settings, InstallerFile
 	IniWrite, %PortableFile%, %IniFile%, Settings, PortableFile
-	SetWorkingDir, %A_Temp%
 	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%
 	Menu, Tray, NoStandard
 	Menu, Tray, Add, Show, TrayAction
@@ -203,12 +201,26 @@ CheckPaths() {
 		}
 		Path := Trim(Path, """")	; FileExist chokes on double quotes
 
+		If (!FileExist(Path) And FileExist(Path ".wubak")) {
+;MsgBox, Restoring from .wubak
+			FileMove, %Path%.wubak, %Path%
+			If (!FileExist(Path) And !A_IsAdmin And !Portable)
+				RunElevated()
+		}
 		If (FileExist(Path) And (InStr(Path, ProgramW6432) Or InStr(Path, A_ProgramFiles)))
 			SetupParams .= " --system-level"
 		Else If (A_IsAdmin And !IsPortable)
 			Unelevate(True)
 	}
 ;MsgBox, Path = %Path%`nSetupParams = %SetupParams%
+
+	If (WorkDir = ".")
+		WorkDir := A_ScriptDir
+	If (WorkDir = "" Or !InStr(FileExist(WorkDir), "D"))
+		WorkDir := A_Temp
+	ExtractDir := WorkDir "\" Browser "-Extracted"
+;MsgBox, %WorkDir% | %ExtractDir%
+	SetWorkingDir, %WorkDir%
 
 	CheckPath:
 ;===========================NEEDS BETTER SOLUTION=======================================
@@ -257,7 +269,7 @@ SelfUpdate() {
 		Return Log("SelfUpdate", _DownloadSelfError, True)
 ;MsgBox, Extracting Self-Update
 	FileMove, %A_ScriptFullPath%, %A_ScriptFullPath%.wubak, 1
-	If (!Extract(A_Temp "\" SelfUpdateZip, A_ScriptDir))
+	If (!Extract(WorkDir "\" SelfUpdateZip, A_ScriptDir))
 		Return Log("SelfUpdate", _ExtractionError, True)
 
 	If (IsPortable) {
@@ -278,8 +290,14 @@ SelfUpdate() {
 CheckWriteAccess() {
 ;	If (!FileExist(A_ScriptDir "\" BrowserExe)) {
 		FileAppend,, %IniFile%
-		If (!ErrorLevel)
+		If (!ErrorLevel) {
+			If (WorkDir <> A_Temp) {
+				FileCreateDir, %ExtractDir%
+				If (ErrorLevel)
+					Die(_WritePermError, WorkDir)
+			}
 			Return
+		}
 ;	}
 
 	AppData := LocalAppData "\" Browser "\WinUpdater"
@@ -376,7 +394,7 @@ DownloadUpdate() {
 	FileName := RegExReplace(FileName, "([\.\+\[\]\{\}\(\)\^\$])", "\$1")
 	Filename := StrReplace(FileName, "*", ".{0,50}?")
 ;MsgBox, %Filename%
-;FileAppend, %ReleaseInfo%, %A_Temp%\ReleaseInfo.txt
+;FileAppend, %ReleaseInfo%, %WorkDir%\ReleaseInfo.txt
 	RegExMatch(ReleaseInfo, "i)""name"":\s*""(" Filename ")"".+?""browser_download_url"":\s*""(.+?)""", DownloadUrl)
 ;MsgBox, Downloading`n%DownloadUrl2%`nto`n%DownloadUrl1%
 	If (!DownloadUrl1 Or !DownloadUrl2)
@@ -431,7 +449,7 @@ ExtractPortable() {
 	PreventRunningWhileUpdating()
 ; Extract archive of portable version
 	Progress(_Extracting)
-	If (!Extract(A_Temp "\" SetupFile, ExtractDir))
+	If (!Extract(WorkDir "\" SetupFile, ExtractDir))
 		Die(_ExtractionError)
 
 	SetWorkingDir, %ExtractDir%
@@ -461,7 +479,7 @@ ExtractPortable() {
 			}
 		}
 ;	}
-	SetWorkingDir, %A_Temp%
+	SetWorkingDir, %WorkDir%
 ;	FileRemoveDir, % PortableDir "\" CurrentVersion, 1
 	FileDelete, %PortableDir%\%CurrentVersion%.manifest
 
@@ -824,6 +842,14 @@ TaskSet() {
 		Progress(_SettingTask _Done, True)
 		GuiShow(True)	; Don't start updating, just wait for close
 	}
+}
+
+RunElevated() {
+;MsgBox, Running elevated (args = "%Args%")
+	Try {
+		Run *RunAs "%A_ScriptFullPath%" %Args% /Restart
+	}
+	ExitApp
 }
 
 Unelevate(Forced = False) {
