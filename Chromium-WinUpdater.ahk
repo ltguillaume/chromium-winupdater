@@ -96,6 +96,7 @@ If (UpdateSelf And A_IsCompiled)
 	SelfUpdate()
 If (GetNewVersion())
 	StartUpdate()
+CopyWidevine()
 Exit()
 
 Init() {
@@ -928,7 +929,7 @@ CopyWidevine() {
     }
 
     ; Get latest Chromium install path
-    chromiumBase := "C:\Users\admin\AppData\Local\Chromium\Application"
+    chromiumBase := "C:\Users\" . A_UserName . "\AppData\Local\Chromium\Application"
     latestChromiumVer := ""
     Loop, Files, % chromiumBase "\*", D
     {
