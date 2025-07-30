@@ -34,8 +34,8 @@ Global Args       := ""
 , SettingTask     := A_Args[1] = "/CreateTask" Or A_Args[1] = "/RemoveTask"
 , ChangesMade     := False
 , Done            := False
-, IniFile, LocalAppData, Path, ProgramW6432, WorkDir, ExtractDir, Repo, Build, IgnoreCrlErrors, UpdateSelf, Task, CurrentDomain, CurrentUpdaterVersion, ReleaseApiUrl
-, InstallerFile, PortableFile, ReleaseInfo, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton
+, IniFile, LocalAppData, Path, Folder, ProgramW6432, WorkDir, ExtractDir, Repo, Build, IgnoreCrlErrors, UpdateSelf, Task, CurrentDomain, CurrentUpdaterVersion
+, ReleaseApiUrl, InstallerFile, PortableFile, ReleaseInfo, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton
 
 ; Strings
 Global _Updater       := Browser " WinUpdater"
@@ -73,7 +73,7 @@ Global _Updater       := Browser " WinUpdater"
 , _Installing         := "Installing new version..."
 , _UpdateError        := "Error while updating."
 , _SilentUpdateError  := "Silent update did not complete.`nDo you want to run the interactive installer?"
-, _NewVersionFound    := "A new version is available.`nClose " Browser " to start updating..."
+, _NewVersionFound    := "New version available.`nClose " Browser " to continue..."
 , _NoNewVersion       := "No new version found."
 , _ExtractionError    := "Could not extract the {Task} archive.`nMake sure " Browser " is not running and restart the updater."
 , _MoveToTargetError  := "Could not move the following file into the target folder:`n{}"
@@ -228,7 +228,8 @@ CheckPaths() {
 		Unelevate(True)
 
 ;MsgBox, Path = %Path%`nSetupParams = %SetupParams%
-	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%`n%Path%
+	Folder := StrReplace(Path, "\" BrowserExe)
+	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%`n%Folder%
 
 	If (WorkDir = ".")
 		WorkDir := A_ScriptDir
@@ -390,7 +391,7 @@ StartUpdate() {
 
 WaitForClose() {
 	; Notify and wait if browser is running
-	PathDS   := StrReplace(Path, "\", "\\")
+	PathDS := StrReplace(Path, "\", "\\")
 	Wait:
 	For Proc in ComObjGet("winmgmts:").ExecQuery("Select ProcessId from Win32_Process where ExecutablePath=""" PathDS """") {
 		If (!Notified) {
@@ -517,7 +518,6 @@ Install() {
 	Progress(_Installing)
 	If (Scheduled)
 		Notify(_Installing, CurrentVersion " " _To " v" NewVersion, 3000)
-	Folder := StrReplace(Path, BrowserExe, "")
 ;	SetupParams := StrReplace(SetupParams, "{}", Folder)
 ;MsgBox, %SetupFile% %SetupParams%
 	; Run silent setup
@@ -530,7 +530,7 @@ Install() {
 ;			Progress(_UpdateError, True)
 ;		Else {
 			RunWait, %SetupFile% %SetupParams%,, UseErrorLevel
-			If (ErrorLevel Or !FileExist(Folder NewVersion))
+			If (ErrorLevel Or !FileExist(Folder "\" NewVersion))
 				Die(_UpdateError (ErrorLevel ? " " A_LastError : ""))
 			Else
 				WriteReport()
@@ -821,7 +821,7 @@ Log(Key, Msg = "", PrefixTime = False) {
 Notify(Msg, Ver = 0, Delay = 0) {
 	If (!Ver)
 		Ver := NewVersion
-	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%`n%Path%`n`n%Msg%
+	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%`n%Folder%`n`n%Msg%
 	If (Scheduled Or Delay) {
 		TrayTip, %Msg%, v%Ver%,, 16
 		Sleep, %Delay%
@@ -834,7 +834,7 @@ Progress(Msg, End = False) {
 		GuiControl,, ProgField, 100
 	Else If (Msg <> _NewVersionFound)
 		GuiControl,, ProgField, +15
-	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%`n%Path%`n`n%Msg%
+	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%`n%Folder%`n`n%Msg%
 
 	GuiControlGet, Prog,, ProgField
 	Done := Prog >= 100
