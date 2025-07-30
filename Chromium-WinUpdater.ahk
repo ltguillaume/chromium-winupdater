@@ -21,7 +21,7 @@
 Global Args       := ""
 , Browser         := "Chromium"
 , BrowserExe      := "chrome.exe"
-, PortableDir     := A_ScriptDir "\" (FileExist(BrowserExe) ? "" : FileExist("Bin\" BrowserExe) ? "Bin" : "Application")
+, PortableDir     := A_ScriptDir "\" (FileExist(A_ScriptDir "\" BrowserExe) ? "" : FileExist(A_ScriptDir "\Bin\" BrowserExe) ? "Bin" : "Application")
 , PortableBrowser := PortableDir "\" BrowserExe
 , ConnectCheckUrl := "https://github.com/manifest.json"
 , SetupParams     := "--do-not-launch-chrome"
