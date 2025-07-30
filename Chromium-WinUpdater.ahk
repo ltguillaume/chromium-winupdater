@@ -100,9 +100,13 @@ Exit()
 
 Init() {
 	FileGetVersion, CurrentUpdaterVersion, %A_ScriptFullPath%
-	CurrentUpdaterVersion := SubStr(CurrentUpdaterVersion, 1, -2)
+	CurrentUpdaterVersion := RegExReplace(CurrentUpdaterVersion, "(\.0)+$")
 	EnvGet, ProgramW6432, ProgramW6432
+	If (ProgramW6432 = "")
+		ProgramW6432 := "?"
 	EnvGet, LocalAppData, LocalAppData
+	If (LocalAppData = "")
+		LocalAppData := "?"
 	SplitPath, A_ScriptFullPath,,,, BaseName
 	IniFile := A_ScriptDir "\" BaseName ".ini"
 	IniRead, IgnoreCrlErrors, %IniFile%, Settings, IgnoreCrlErrors, 0
