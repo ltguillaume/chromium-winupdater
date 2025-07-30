@@ -1,10 +1,10 @@
 ; TODO: - Check paths via registry or hardcode A_ProgramFiles and A_ProgramW6432
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.10.0
-;@Ahk2Exe-SetProductVersion 1.10.0
+;@Ahk2Exe-SetFileVersion 1.11.0
+;@Ahk2Exe-SetProductVersion 1.11.0
 
-;@Ahk2Exe-Base Unicode 32*
+;@Ahk2Exe-Base Unicode 64*
 ;@Ahk2Exe-SetCopyright ltguillaume
 ;@Ahk2Exe-SetDescription Chromium Browser Windows Updater
 ;@Ahk2Exe-SetMainIcon Chromium-WinUpdater.ico
@@ -24,7 +24,6 @@ Global Args       := ""
 , PortableDir     := A_ScriptDir "\" (FileExist(BrowserExe) ? "" : FileExist("Bin\" BrowserExe) ? "Bin" : "Application")
 , PortableBrowser := PortableDir "\" BrowserExe
 , ConnectCheckUrl := "https://github.com/manifest.json"
-, SelfUpdateZip   := Browser "-WinUpdater.zip"
 , SetupParams     := "--do-not-launch-chrome"
 , TaskCreateFile  := "ScheduledTask-Create.ps1"
 , TaskRemoveFile  := "ScheduledTask-Remove.ps1"
@@ -35,7 +34,8 @@ Global Args       := ""
 , SettingTask     := A_Args[1] = "/CreateTask" Or A_Args[1] = "/RemoveTask"
 , ChangesMade     := False
 , Done            := False
-, IniFile, LocalAppData, Path, ProgramW6432, WorkDir, ExtractDir, Repo, Build, IgnoreCrlErrors, UpdateSelf, Task, CurrentDomain, CurrentUpdaterVersion, ReleaseApiUrl, InstallerFile, PortableFile, ReleaseInfo, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton
+, IniFile, LocalAppData, Path, ProgramW6432, WorkDir, ExtractDir, Repo, Build, IgnoreCrlErrors, UpdateSelf, Task, CurrentDomain, CurrentUpdaterVersion, ReleaseApiUrl
+, InstallerFile, PortableFile, ReleaseInfo, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton
 
 ; Strings
 Global _Updater       := Browser " WinUpdater"
@@ -65,7 +65,7 @@ Global _Updater       := Browser " WinUpdater"
 , _CheckingHash       := "Checking file integrity..."
 , _FindSumsUrlError   := "Could not find the URL to the checksum file."
 , _FindChecksumError  := "Could not find the checksum for the downloaded file."
-, _ChecksumMatchError := "The file checksum did not match, so it's possible the download failed."
+, _ChecksumMatchError := "The file checksum for {} did not match, so it's possible the download failed."
 , _ChangesMade        := "However, new files were written to the target folder!"
 , _NoChangesMade      := "No changes were made to your " Browser " folder."
 , _Extracting         := "Extracting portable version..."
@@ -273,20 +273,23 @@ SelfUpdate() {
 	If (!VerCompare(GetLatestVersion(), ">" CurrentUpdaterVersion))
 		Return
 
-	RegExp := "i)name"":\s*""" Browser "-WinUpdater.+?\.zip"".*?browser_download_url"":\s*""(.*?)"""
-	RegExMatch(ReleaseInfo, RegExp, DownloadUrl)
-;MsgBox, %DownloadUrl1%
-	If (!DownloadUrl1)
+	RegExMatch(ReleaseInfo, "i)name"":\s*""(" Browser "-WinUpdater.{1,15}\.zip)"".*?browser_download_url"":\s*""(.*?)""", DownloadUrl)
+	If (!DownloadUrl1 Or !DownloadUrl2)
 		Return Log("SelfUpdate", _FindUrlError, True)
 
-	UrlDownloadToFile, %DownloadUrl1%, %SelfUpdateZip%
+;MsgBox, %DownloadUrl1%`n%DownloadUrl2%
+	SelfUpdateZip := DownloadUrl1
+	UrlDownloadToFile, %DownloadUrl2%, %SelfUpdateZip%
 	If (!FileExist(SelfUpdateZip))
 		Return Log("SelfUpdate", _DownloadSelfError, True)
-;MsgBox, Extracting Self-Update
+;MsgBox, Extracting %SelfUpdateZip%
+	VerifyChecksum(SelfUpdateZip)
+
 	FileMove, %A_ScriptFullPath%, %A_ScriptFullPath%.wubak, 1
 	If (!Extract(WorkDir "\" SelfUpdateZip, A_ScriptDir))
 		Return Log("SelfUpdate", _ExtractionError, True)
 
+	FileDelete, %SelfUpdateZip%
 	If (IsPortable) {
 		FileDelete, %A_ScriptDir%\%TaskCreateFile%
 		FileDelete, %A_ScriptDir%\%TaskRemoveFile%
@@ -422,26 +425,31 @@ DownloadUpdate() {
 	If (!FileExist(SetupFile))
 		Die(_DownloadSetupError)
 
-	VerifyChecksum()
+	;VerifyChecksum(SetupFile)
+	RunUpdate()
 }
 
-VerifyChecksum() {	; Skipped
+VerifyChecksum(File) {
 	; Get checksum file
-;	RegExMatch(ReleaseInfo, "i)""name"":\s*""sha256sums\.txt"",.*?""browser_download_url"":\s*""(.+?)""", ChecksumUrl)
-;	If (!ChecksumUrl1)
-;		Die(_FindSumsUrlError)
-;	Checksum := Download(ChecksumUrl1)
+	RegEx := Task = _Updater ? "i)name"":\s*""" Browser "-WinUpdater.+?\.sha256"".*?browser_download_url"":\s*""(.*?)""" : "i)""name"":\s*""sha256sums\.txt"",\s*""url"":\s*""(.+?)"""
+	RegExMatch(ReleaseInfo, RegEx, ChecksumUrl)
+	If (!ChecksumUrl1)
+		Die(_FindSumsUrlError)
+	Checksum := Download(ChecksumUrl1)
 
 	; Get checksum for downloaded file
-;	RegExMatch(Checksum, "i)(\S+?)\s+\*?\Q" SetupFile "\E", Checksum)
-;	If (!Checksum1)
-;		Die(_FindChecksumError)
+	RegExMatch(Checksum, "i)(\S+?)\s+\*?\Q" File "\E", Checksum)
+	If (!Checksum1)
+		Die(_FindChecksumError)
 
 	; Compare checksum with downloaded file
-;	If (Checksum1 <> Hash(SetupFile))
-;		Die(_ChecksumMatchError)
+	If (Task = Browser)
+		Progress(_CheckingHash)
+	If (Checksum1 <> Hash(File))
+		Die(_ChecksumMatchError, File)
 
-	RunUpdate()
+	If (Task = Browser)
+		RunUpdate()
 }
 
 RunUpdate() {
@@ -569,7 +577,7 @@ Exit(Restart = False) {
 		FileMove, %A_ScriptFullPath%.wubak, %A_ScriptFullPath%
 	Else
 		FileDelete, %A_ScriptFullPath%.wubak
-	FileDelete, %SelfUpdateZip%
+
 	If (FileExist(Path ".wubak")) {
 		If (FileExist(Path))
 			FileDelete, %Path%.wubak
@@ -794,6 +802,8 @@ FreeHandles:
 	DllCall("FreeLibrary", "Ptr", hModule)
 	DllCall("Advapi32\CryptDestroyHash", "Ptr", hHash)
 	DllCall("Advapi32\CryptReleaseContext", "Ptr", hCryptProv, "UInt", 0)
+
+;MsgBox, %filePath%`n%hashVal%
 	Return hashVal
 }
 
