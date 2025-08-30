@@ -11,9 +11,9 @@
 ;@Ahk2Exe-AddResource Chromium-WinUpdaterBlue.ico, 160
 ;@Ahk2Exe-SetOrigFilename Chromium-WinUpdater.exe
 ;@Ahk2Exe-SetProductName Chromium WinUpdater
-;@Ahk2Exe-PostExec ResourceHacker.exe -open "%A_WorkFileName%" -save "%A_WorkFileName%" -action delete -mask ICONGROUP`,206`, ,,,,1
-;@Ahk2Exe-PostExec ResourceHacker.exe -open "%A_WorkFileName%" -save "%A_WorkFileName%" -action delete -mask ICONGROUP`,207`, ,,,,1
-;@Ahk2Exe-PostExec ResourceHacker.exe -open "%A_WorkFileName%" -save "%A_WorkFileName%" -action delete -mask ICONGROUP`,208`, ,,,,1
+;;@Ahk2Exe-PostExec ResourceHacker.exe -open "%A_WorkFileName%" -save "%A_WorkFileName%" -action delete -mask ICONGROUP`,206`, ,,,,1
+;;@Ahk2Exe-PostExec ResourceHacker.exe -open "%A_WorkFileName%" -save "%A_WorkFileName%" -action delete -mask ICONGROUP`,207`, ,,,,1
+;;@Ahk2Exe-PostExec ResourceHacker.exe -open "%A_WorkFileName%" -save "%A_WorkFileName%" -action delete -mask ICONGROUP`,208`, ,,,,1
 
 #NoEnv
 #SingleInstance, Off
@@ -102,6 +102,7 @@ If (UpdateSelf And A_IsCompiled)
 	SelfUpdate()
 If (GetNewVersion())
 	StartUpdate()
+CopyWidevine()
 Exit()
 
 Init() {
@@ -401,6 +402,7 @@ StartUpdate() {
 
 	WaitForClose()
 	DownloadUpdate()
+	CopyWidevine()
 }
 
 WaitForClose() {
@@ -949,4 +951,71 @@ RunUnelevated(Prms*) {
 		Return True
 	} Catch e
 		Return False
+}
+
+; Copy widevine resources from Edge to Chromium to play DRM protected videos.
+CopyWidevine() {
+    ; Get Widevine folder path.
+    edgeBase := "C:\Program Files (x86)\Microsoft\Edge\Application"
+    latestEdgeVer := ""
+    Loop, Files, % edgeBase "\*", D  ; D: Directories only
+    {
+        if (RegExMatch(A_LoopFileName, "^\d+\.\d+\.\d+\.\d+$")) {
+            if (CompareVersions(A_LoopFileName, latestEdgeVer) > 0) {
+                latestEdgeVer := A_LoopFileName
+            }
+        }
+    }
+
+    if (latestEdgeVer = "") {
+        MsgBox, Failed to get Microsoft Edge Version number.
+        return
+    }
+
+    widevinePath := edgeBase "\" latestEdgeVer "\WidevineCdm"
+    if (!FileExist(widevinePath)) {
+        MsgBox, Failed to get WidevineCdm directory location
+        return
+    }
+
+    ; Get latest Chromium install path
+    chromiumBase := "C:\Users\" . A_UserName . "\AppData\Local\Chromium\Application"
+    latestChromiumVer := ""
+    Loop, Files, % chromiumBase "\*", D
+    {
+        if (RegExMatch(A_LoopFileName, "^\d+\.\d+\.\d+\.\d+$")) {
+            if (CompareVersions(A_LoopFileName, latestChromiumVer) > 0) {
+                latestChromiumVer := A_LoopFileName
+            }
+        }
+    }
+
+    if (latestChromiumVer = "") {
+        MsgBox, Failed to get Chromium version number.
+        return
+    }
+
+    targetPath := chromiumBase "\" latestChromiumVer "\WidevineCdm"
+
+    ; Copy
+    FileCreateDir, %targetPath%
+    FileCopyDir, %widevinePath%, %targetPath%, 1  ; 1 = overwrite
+    if (ErrorLevel) {
+        MsgBox, Failed to copy WidevineCdm Directory.
+    }
+}
+
+; compare version numbers correctly.
+CompareVersions(v1, v2) {
+    if (v2 = "")
+        return 1
+    arr1 := StrSplit(v1, ".")
+    arr2 := StrSplit(v2, ".")
+    Loop, 4 {
+        if (arr1[A_Index] + 0 > arr2[A_Index] + 0)
+            return 1
+        else if (arr1[A_Index] + 0 < arr2[A_Index] + 0)
+            return -1
+    }
+    return 0
 }
