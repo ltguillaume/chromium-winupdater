@@ -18,6 +18,11 @@ An attempt to make updating Chromium for Windows much easier. This is a fork of 
 - If your account has administrator privileges, the update will be fully automatic. If not, the update will be downloaded and you will be asked by WinUpdater to start the update.  
 - If Chromium is already running, the updater will notify you of the new version. The update will start as soon as you close the browser.
 
+## Issues
+- If you set up scheduled updates, you might get annoyed by some __anti-cheat software__. It may wrongfully point at WinUpdater, because it is built upon AutoHotkey, which _can_ be used to cheat in games. If this happens, you can either:
+  1. Open the __Task Scheduler__ via the Start menu, then double-click on `Chromium WinUpdater...` in the `Task Scheduler Library`, open the `Triggers` tab, then click on `One time` and the button `Delete`. Then press `OK` to make the change to _only check for updates 1 minute after logging on_ (and not every 4 hours). This will still cause issues if you leave games opened when locking your user account, though.
+  2. Create a shortcut to `Chromium-Winupdater.exe /RemoveTask` and one to `Chromium-Winupdater.exe /CreateTask` (on your desktop), so you can quickly prevent WinUpdater from running during gameplay and reactivate it afterwards. Just put them next to the shortcuts of your game launchers and you won't forget.
+  
 ## Remarks
 - The updater needs to be able to write to `Chromium-WinUpdater.ini` in its own folder (so make sure it has permission to do so), otherwise WinUpdater will copy itself to `%LocalAppData%\Chromium\WinUpdater` and run from there.
 - WinUpdater by default downloads the 64-bit release of [Ungoogled Chromium by Marmaduke](https://github.com/macchrome/winchrome/releases).  
