@@ -423,12 +423,6 @@ GetUpdate() {
 	RunUpdate()
 }
 
-ClearMem() {
-	Proc := DllCall("OpenProcess", "UInt", 0x001F0FFF, "Int", 0, "Int", DllCall("GetCurrentProcessId"))
-	DllCall("SetProcessWorkingSetSize", "UInt", Proc, "Int", -1, "Int", -1)
-	DllCall("CloseHandle", "Int", Proc)
-}
-
 DownloadUpdate() {
 	; Get setup file URL
 	FileName := IsPortable ? PortableFile : InstallerFile
@@ -465,10 +459,16 @@ BrowserWaitClose() {
 			Notify(_NewVersionFound)
 			Notified := True
 		}
-		ClearMem()
+		ReleaseMem()
 		Process, WaitClose, % Proc.ProcessId
 		Goto, Wait
 	}
+}
+
+ReleaseMem() {
+	Proc := DllCall("OpenProcess", "UInt", 0x001F0FFF, "Int", 0, "Int", DllCall("GetCurrentProcessId"))
+	DllCall("SetProcessWorkingSetSize", "UInt", Proc, "Int", -1, "Int", -1)
+	DllCall("CloseHandle", "Int", Proc)
 }
 
 Verify(File) {
@@ -785,7 +785,7 @@ GuiShow(Wait = False) {
 }
 
 GuiWaitClose() {
-	ClearMem()
+	ReleaseMem()
 	WinWaitClose, ahk_id %GuiHwnd%
 }
 
