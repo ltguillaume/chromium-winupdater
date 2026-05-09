@@ -61,7 +61,7 @@ jobs:
           APP_VERSION=$(grep -oP "SetFileVersion \K[\d.]+" ${{ env.APP_FILE }}.ahk)
           echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_ENV
           mkdir ./dist
-          zip ./dist/${{ env.APP_FILE }}_${APP_VERSION}.zip ${{ env.APP_FILE }}.exe ${{ env.APP_FILE }}.url *.ps1 *.template.ini
+          zip ./dist/${{ env.APP_FILE }}_${APP_VERSION}.zip ${{ env.APP_FILE }}.exe ${{ env.APP_FILE }}.url *.ps1 *.template.ini 7za-License.txt
 
       - name: Upload artifacts
         uses: https://data.forgejo.org/forgejo/upload-artifact@v4
