@@ -1,8 +1,8 @@
 ; TODO: - Check paths via registry or hardcode A_ProgramFiles and A_ProgramW6432
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.12.0
-;@Ahk2Exe-SetProductVersion 1.12.0
+;@Ahk2Exe-SetFileVersion 1.12.1
+;@Ahk2Exe-SetProductVersion 1.12.1
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -376,8 +376,14 @@ GetCurrentBuild() {
 }
 
 CheckConnection() {
-	If (!Download(ConnectCheckUrl))
-		Die(_NoConnectionError,, !Scheduled)	; Show only if not scheduled
+	Connected := Download(ConnectCheckUrl)
+;MsgBox, %Connected%
+	If (!Connected Or !InStr(Connected, "githubassets")) {
+		RegExMatch(Connected, "i)<title>(.+?)</title>", Title)
+		Title := Title1 ? "`n" Title1 "." : ""
+;MsgBox, %Title%
+		Die(_NoConnectionError Title,, !Scheduled)	; Show only if not scheduled
+	}
 }
 
 GetNewVersion() {
