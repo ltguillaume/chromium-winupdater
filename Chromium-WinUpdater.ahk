@@ -184,7 +184,7 @@ Action(ItemName, GuiEvent, LinkIndex) {
 			Run, %IniFile%
 			Return
 		Case _Exit:
-			If (Done)
+			If (Died Or Done)
 				GuiClose()
 			Else
 				GuiShow()
@@ -611,7 +611,7 @@ Exit(Restart = False) {
 
 ; Clean up
 	Log("LastRun",, True)
-	If (SetupFile And (Done Or Died = _DownloadSetupError Or Died = _ChecksumMatchError)) {
+	If (SetupFile And (Died = _DownloadSetupError Or Died = _ChecksumMatchError Or Done)) {
 		Sleep, 2000
 		FileDelete, %SetupFile%
 	}
@@ -661,7 +661,6 @@ Die(Error, Var = False, Show = True) {
 	Gui, Add, Link, gAction x15 y81 w290 cCCCCCC, %Msg%
 
 	Died := Error
-	Done := True
 	If (Show)
 		GuiShow(True)	; Wait for user action
 	Else
@@ -771,7 +770,7 @@ GuiClose() {
 }
 
 GuiEscape:
-	If (Done)	; Only when error or done
+	If (Died Or Done)	; Only when error or done
 		GuiClose()
 Return
 
