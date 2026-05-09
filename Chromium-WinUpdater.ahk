@@ -419,7 +419,7 @@ GetUpdate() {
 		FileDelete, %SetupFile%
 		Goto, Download
 	}
-	Verify(SetupFile)
+;	Verify(SetupFile)
 	RunUpdate()
 }
 
