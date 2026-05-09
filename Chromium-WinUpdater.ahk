@@ -1,8 +1,8 @@
 ; TODO: - Check paths via registry or hardcode A_ProgramFiles and A_ProgramW6432
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.14.0
-;@Ahk2Exe-SetProductVersion 1.14.0
+;@Ahk2Exe-SetFileVersion 1.14.2
+;@Ahk2Exe-SetProductVersion 1.14.2
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -630,10 +630,11 @@ Exit(Restart = False) {
 ; Helper functions
 
 Die(Error, Var = False, Show = True) {
+	Msg := Error
 	If (Var)
-		Msg := StrReplace(Error, "{}", Var)
-	Msg := StrReplace(Error, "{Task}", Task)
-	Log("LastResult", Error)
+		Msg := StrReplace(Msg, "{}", Var)
+	Msg := StrReplace(Msg, "{Task}", Task)
+	Log("LastResult", Msg)
 	GuiControl, Hide, ProgField
 	GuiControl, Hide, LogField
 	GuiControl, Disable, TaskSetField
