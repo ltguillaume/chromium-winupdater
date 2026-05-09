@@ -287,15 +287,16 @@ SelfUpdate() {
 	If (!VerCompare(GetLatestVersion(), ">" CurrentUpdaterVersion))
 		Return
 
-	RegExMatch(ReleaseInfo, "i)""name"":\s*""(" Browser "-WinUpdater.{1,15}\.zip)"".*?""browser_download_url"":\s*""(.+?)""", DownloadUrl)
-	If (!DownloadUrl1 Or !DownloadUrl2)
+	RegExMatch(ReleaseInfo, "i)""name"":\s*""(" Browser "-WinUpdater.{1,15}\.zip)"".*?""browser_download_url"":\s*""(.+?)""", DownloadInfo)
+	If (!DownloadInfo1 Or !DownloadInfo2)
 		Return Log("SelfUpdate", _FindUrlError, True)
 
 	PreventShutdown()
 
-;MsgBox, %DownloadUrl1%`n%DownloadUrl2%
-	SelfUpdateZip := DownloadUrl1
-	UrlDownloadToFile, %DownloadUrl2%, %SelfUpdateZip%
+;MsgBox, %DownloadInfo1%`n%DownloadInfo2%
+	SelfUpdateZip := DownloadInfo1
+	DownloadUrl := DownloadInfo2
+	UrlDownloadToFile, %DownloadUrl%, %SelfUpdateZip%
 	If (ErrorLevel Or !FileExist(SelfUpdateZip))
 		Return Log("SelfUpdate", _DownloadSelfError, True)
 ;MsgBox, Extracting %SelfUpdateZip%
@@ -435,15 +436,16 @@ DownloadUpdate() {
 	Filename := StrReplace(FileName, "*", ".{0,50}?")
 ;MsgBox, %Filename%
 ;FileAppend, %ReleaseInfo%, %WorkDir%\ReleaseInfo.txt
-	RegExMatch(ReleaseInfo, "i)""name"":\s*""(" Filename ")"".*?""browser_download_url"":\s*""(.+?)""", DownloadUrl)
-;MsgBox, Downloading`n%DownloadUrl2%`nto`n%DownloadUrl1%
-	If (!DownloadUrl1 Or !DownloadUrl2)
+	RegExMatch(ReleaseInfo, "i)""name"":\s*""(" Filename ")"".*?""browser_download_url"":\s*""(.+?)""", DownloadInfo)
+;MsgBox, Downloading`n%DownloadInfo2%`nto`n%DownloadInfo1%
+	If (!DownloadInfo1 Or !DownloadInfo2)
 		Die(_FindUrlError)
 
 	; Download setup file
 	Progress(_Downloading)
-	SetupFile := DownloadUrl1
-	UrlDownloadToFile, %DownloadUrl2%, %SetupFile%
+	SetupFile := DownloadInfo1
+	DownloadUrl := DownloadInfo2
+	UrlDownloadToFile, %DownloadUrl%, %SetupFile%
 	If (ErrorLevel Or !FileExist(SetupFile))
 		Die(_DownloadSetupError)
 
