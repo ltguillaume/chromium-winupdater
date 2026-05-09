@@ -1,8 +1,8 @@
 ; TODO: - Check paths via registry or hardcode A_ProgramFiles and A_ProgramW6432
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.12.3
-;@Ahk2Exe-SetProductVersion 1.12.3
+;@Ahk2Exe-SetFileVersion 1.14.0
+;@Ahk2Exe-SetProductVersion 1.14.0
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -35,7 +35,7 @@ Global Args       := ""
 , ChangesMade     := False
 , Done            := False
 , IniFile, LocalAppData, Path, Folder, ProgramW6432, WorkDir, ExtractDir, Repo, Build, IgnoreCrlErrors, UpdateSelf, Task, CurrentDomain, CurrentUpdaterVersion, ReleaseApiUrl
-, InstallerFile, PortableFile, ReleaseInfo, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton, ShutdownBlocked
+, InstallerFile, PortableFile, ReleaseInfo, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton, ShutdownBlocked, Died
 
 ; Strings
 Global _Updater       := Browser " WinUpdater"
@@ -445,6 +445,11 @@ DownloadUpdate() {
 	Progress(_Downloading)
 	SetupFile := DownloadInfo1
 	DownloadUrl := DownloadInfo2
+
+	; Verify if already downloaded
+		If (FileExist(SetupFile))
+			Return VerifyChecksum(SetupFile)
+
 	UrlDownloadToFile, %DownloadUrl%, %SetupFile%
 	If (ErrorLevel Or !FileExist(SetupFile))
 		Die(_DownloadSetupError)
@@ -591,10 +596,9 @@ Exit(Restart = False) {
 
 ; Clean up
 	Log("LastRun",, True)
-	If (SetupFile) {
-		Sleep, 2000
+	Sleep, 2000
+	If (!Died Or Died = _DownloadSetupError Or Died = _ChecksumMatchError)
 		FileDelete, %SetupFile%
-	}
 	If (IsPortable)
 		FileRemoveDir, %ExtractDir%, 1
 	If (FileExist(A_ScriptFullPath ".wubak") And !FileExist(A_ScriptFullPath))
@@ -626,8 +630,8 @@ Exit(Restart = False) {
 
 Die(Error, Var = False, Show = True) {
 	If (Var)
-		Error := StrReplace(Error, "{}", Var)
-	Error := StrReplace(Error, "{Task}", Task)
+		Msg := StrReplace(Error, "{}", Var)
+	Msg := StrReplace(Error, "{Task}", Task)
 	Log("LastResult", Error)
 	GuiControl, Hide, ProgField
 	GuiControl, Hide, LogField
@@ -636,9 +640,10 @@ Die(Error, Var = False, Show = True) {
 	Gui, Font, s38
 	Gui, Add, Text, x264 y-2 cYellow, % Chr("0x26A0")
 	Gui, Font, s9
-	Msg := Error " " (ChangesMade ? _ChangesMade : _NoChangesMade) "`n`n" _GoToWebsite
+	Msg := Msg " " (ChangesMade ? _ChangesMade : _NoChangesMade) "`n`n" _GoToWebsite
 	Gui, Add, Link, gAction x15 y81 w290 cCCCCCC, %Msg%
 
+	Died := Error
 	Done := True
 	If (Show)
 		GuiShow(True)	; Wait for user action
