@@ -402,7 +402,7 @@ GetNewVersion() {
 		Log("LastResult", _NoNewVersion)
 		Return False
 	}
-	Return True
+	Return NewVersion
 }
 
 GetUpdate() {
@@ -414,7 +414,7 @@ GetUpdate() {
 	DownloadUpdate()
 	BrowserWaitClose()
 
-	If (VerCompare(GetLatestVersion(), ">" NewVersion)) {	; Check for newer version since download
+	If (VerCompare(GetNewVersion(), ">" NewVersion)) {	; Check for newer version since download
 ;MsgBox, Redownloading newer version %NewVersion%
 		FileDelete, %SetupFile%
 		Goto, Download
