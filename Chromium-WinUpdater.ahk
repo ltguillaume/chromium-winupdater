@@ -544,8 +544,8 @@ ExtractPortable() {
 	}
 
 	FileMove, %BrowserExe%, %Path%, 1
-		If (ErrorLevel)
-			Die(_MoveToTargetError, BrowserExe)
+	If (ErrorLevel)
+		Die(_MoveToTargetError, BrowserExe)
 
 ;	FileRemoveDir, % PortableDir "\" CurrentVersion, 1
 	FileDelete, %PortableDir%\%CurrentVersion%.manifest
@@ -583,7 +583,7 @@ Install() {
 
 PreventRunningWhileUpdating() {
 	If (A_IsAdmin Or IsPortable)
-		FileMove, %Path%, %Path%.wubak, 1
+	FileMove, %Path%, %Path%.wubak, 1
 }
 
 WriteReport() {
