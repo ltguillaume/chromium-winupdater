@@ -50,7 +50,7 @@ jobs:
         run: |
           APP_VERSION=$(grep -oP "SetFileVersion \K[\d.]+" ${{ env.APP_FILE }}.ahk)
           mkdir ./dist
-          zip ./dist/${{ env.APP_FILE }}_${APP_VERSION}.zip ${{ env.APP_FILE }}.exe ${{ env.APP_FILE }}.url *.ps1
+          zip ./dist/${{ env.APP_FILE }}_${APP_VERSION}.zip ${{ env.APP_FILE }}.exe ${{ env.APP_FILE }}.url *.ps1 *.template.ini
 
       - name: Upload artifacts
         uses: https://data.forgejo.org/forgejo/upload-artifact@v4
