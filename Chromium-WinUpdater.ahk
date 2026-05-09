@@ -35,7 +35,7 @@ Global Args       := ""
 , ChangesMade     := False
 , Done            := False
 , IniFile, LocalAppData, Path, Folder, ProgramW6432, WorkDir, ExtractDir, Repo, Build, IgnoreCrlErrors, UpdateSelf, Task, CurrentDomain, CurrentUpdaterVersion, ReleaseApiUrl
-, InstallerFile, PortableFile, ReleaseInfo, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton, shutdownBlocked
+, InstallerFile, PortableFile, ReleaseInfo, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton, ShutdownBlocked
 
 ; Strings
 Global _Updater       := Browser " WinUpdater"
@@ -565,7 +565,7 @@ WriteReport() {
 	Log("LastUpdateTo", NewVersion)
 	Log("LastResult", _IsUpdated)
 	Progress(_IsUpdated, True)
-	Notify(_IsUpdated, CurrentVersion " " _To " v" NewVersion, Scheduled And !shutdownBlocked ? 60000 : 0)
+	Notify(_IsUpdated, CurrentVersion " " _To " v" NewVersion, Scheduled And !ShutdownBlocked ? 60000 : 0)
 
 	Exit()
 }
@@ -576,7 +576,7 @@ Restart() {
 
 Exit(Restart = False) {
 ; Wait for close
-	If (!Restart And !shutdownBlocked And !A_Args.Length() And WinExist("ahk_id " GuiHwnd))
+	If (!Restart And !ShutdownBlocked And !A_Args.Length() And WinExist("ahk_id " GuiHwnd))
 		WinWaitClose, ahk_id %GuiHwnd%
 	Else
 		Gui, Destroy
@@ -679,7 +679,7 @@ PreventShutdown() {
 
 BlockShutdown(wParam, lParam) {
 	DllCall("ShutdownBlockReasonCreate", "ptr", GuiHwnd, "wstr", _IsUpdating)
-	shutdownBlocked := True
+	ShutdownBlocked := True
 	OnExit("AllowShutdown")
 	GuiShow()
 	Return False
@@ -745,7 +745,7 @@ GuiEscape:
 Return
 
 GuiShow(Wait = False) {
-	Focus  := WinActive("ahk_id " GuiHwnd) Or !Scheduled Or shutdownBlocked
+	Focus  := WinActive("ahk_id " GuiHwnd) Or !Scheduled Or ShutdownBlocked
 	NoFocus := WinExist("ahk_id " GuiHwnd) ? "NA" : "Minimize"
 	Gui, Show, % "AutoSize " (Focus ? "" : NoFocus)
 	If (!Focus)
