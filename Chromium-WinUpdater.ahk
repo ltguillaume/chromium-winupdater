@@ -1,8 +1,8 @@
 ; TODO: - Check paths via registry or hardcode A_ProgramFiles and A_ProgramW6432
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.11.1
-;@Ahk2Exe-SetProductVersion 1.11.1
+;@Ahk2Exe-SetFileVersion 1.12.0
+;@Ahk2Exe-SetProductVersion 1.12.0
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -287,7 +287,7 @@ SelfUpdate() {
 	If (!VerCompare(GetLatestVersion(), ">" CurrentUpdaterVersion))
 		Return
 
-	RegExMatch(ReleaseInfo, "i)name"":\s*""(" Browser "-WinUpdater.{1,15}\.zip)"".*?browser_download_url"":\s*""(.*?)""", DownloadUrl)
+	RegExMatch(ReleaseInfo, "i)""name"":\s*""(" Browser "-WinUpdater.{1,15}\.zip)"".*?""browser_download_url"":\s*""(.+?)""", DownloadUrl)
 	If (!DownloadUrl1 Or !DownloadUrl2)
 		Return Log("SelfUpdate", _FindUrlError, True)
 
@@ -429,7 +429,7 @@ DownloadUpdate() {
 	Filename := StrReplace(FileName, "*", ".{0,50}?")
 ;MsgBox, %Filename%
 ;FileAppend, %ReleaseInfo%, %WorkDir%\ReleaseInfo.txt
-	RegExMatch(ReleaseInfo, "i)""name"":\s*""(" Filename ")"".+?""browser_download_url"":\s*""(.+?)""", DownloadUrl)
+	RegExMatch(ReleaseInfo, "i)""name"":\s*""(" Filename ")"".*?""browser_download_url"":\s*""(.+?)""", DownloadUrl)
 ;MsgBox, Downloading`n%DownloadUrl2%`nto`n%DownloadUrl1%
 	If (!DownloadUrl1 Or !DownloadUrl2)
 		Die(_FindUrlError)
@@ -447,7 +447,7 @@ DownloadUpdate() {
 
 VerifyChecksum(File) {
 	; Get checksum file
-	RegEx := Task = _Updater ? "i)name"":\s*""" Browser "-WinUpdater.+?\.sha256"".*?browser_download_url"":\s*""(.*?)""" : "i)""name"":\s*""sha256sums\.txt"",\s*""url"":\s*""(.+?)"""
+	RegEx := "i)""name"":\s*""" (Task = _Updater ? Browser "-WinUpdater.+?\.sha256" : "sha256sums\.txt") """.*?""browser_download_url"":\s*""(.+?)"""
 	RegExMatch(ReleaseInfo, RegEx, ChecksumUrl)
 	If (!ChecksumUrl1)
 		Die(_FindSumsUrlError)
