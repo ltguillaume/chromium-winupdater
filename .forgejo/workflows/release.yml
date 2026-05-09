@@ -100,4 +100,4 @@ jobs:
             > [!CAUTION]
             > [Link to VirusTotal Report](${{ env.VT_URL }})
             > Some antivirus software might mark this as malware. [This is a false positive](https://www.autohotkey.com/docs/v1/FAQ.htm#Virus). Please report the program as safe if possible.
-            > <details><summary>Known problematic vendors</summary><em>Arctic Wolf, DeepInstinct, Gridinsoft, NANO-Antivirus, SecureAge, Skyhigh (SWG), Trapmine, Trellix, VirIT, Zillya.</em></details>
+            > <details><summary>Known problematic vendors</summary><em>Arctic Wolf, CrowdStrike Falcon, DeepInstinct, Gridinsoft, NANO-Antivirus, SecureAge, Skyhigh (SWG), Trapmine, Trellix, VirIT, Zillya.</em></details>
