@@ -1,8 +1,8 @@
 ; TODO: - Check paths via registry or hardcode A_ProgramFiles and A_ProgramW6432
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.14.3
-;@Ahk2Exe-SetProductVersion 1.14.3
+;@Ahk2Exe-SetFileVersion 1.14.6
+;@Ahk2Exe-SetProductVersion 1.14.6
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -765,14 +765,17 @@ GuiEscape:
 Return
 
 GuiShow(Wait = False) {
-	Focus  := WinActive("ahk_id " GuiHwnd) Or !Scheduled Or ShutdownBlocked
 	NoFocus := WinExist("ahk_id " GuiHwnd) ? "NA" : "Minimize"
-	Gui, Show, % "AutoSize " (Focus ? "" : NoFocus)
-	If (!Focus)
+	Gui, Show, % "AutoSize " (Focus() ? "" : NoFocus)
+	If (!Focus())
 		Gui, Flash
 	ControlFocus, SysLink1
 	If (Wait)
 		WinWaitClose, ahk_id %GuiHwnd%
+}
+
+Focus() {
+	Return WinActive("ahk_id " GuiHwnd) Or !Scheduled Or ShutdownBlocked
 }
 
 Hash(filePath, hashType = 4) {
