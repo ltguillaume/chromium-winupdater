@@ -1,8 +1,8 @@
 ; TODO: - Check paths via registry or hardcode A_ProgramFiles and A_ProgramW6432
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.14.6
-;@Ahk2Exe-SetProductVersion 1.14.6
+;@Ahk2Exe-SetFileVersion 1.15.0
+;@Ahk2Exe-SetProductVersion 1.15.0
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -526,27 +526,32 @@ ExtractPortable() {
 			}
 		}
 	}
-		Loop, Files, *, R
-		{
-;			If (A_LoopFileName = UpdaterFile)
-;				Continue
-			FileGetSize, CurrentFileSize, %PortableDir%\%A_LoopFilePath%
+
+	Loop, Files, *, R
+	{
+		If (A_LoopFileName = BrowserExe Or A_LoopFileName = UpdaterFile)
+			Continue
+		FileGetSize, CurrentFileSize, %PortableDir%\%A_LoopFilePath%
 ;MsgBox, % A_LoopFilePath "`n" A_LoopFileSize "`n" CurrentFileSize "`n" Hash(A_LoopFilePath) "`n" Hash(PortableDir "\" A_LoopFilePath)
-			If (!FileExist(PortableDir "\" A_LoopFileDir))
-				FileCreateDir, %PortableDir%\%A_LoopFileDir%
-			If (!FileExist(PortableDir "\" A_LoopFilePath) Or A_LoopFileSize <> CurrentFileSize Or Hash(A_LoopFilePath) <> Hash(PortableDir "\" A_LoopFilePath)) {
+		If (!FileExist(PortableDir "\" A_LoopFileDir))
+			FileCreateDir, %PortableDir%\%A_LoopFileDir%
+		If (!FileExist(PortableDir "\" A_LoopFilePath) Or A_LoopFileSize <> CurrentFileSize Or Hash(A_LoopFilePath) <> Hash(PortableDir "\" A_LoopFilePath)) {
 ;MsgBox, Moving %A_LoopFilePath%
-				FileMove, %A_LoopFilePath%, %PortableDir%\%A_LoopFilePath%, 1
-				If (ErrorLevel)
-					Die(_MoveToTargetError, A_LoopFilePath)
-				ChangesMade := True
-			}
+			FileMove, %A_LoopFilePath%, %PortableDir%\%A_LoopFilePath%, 1
+			If (ErrorLevel)
+				Die(_MoveToTargetError, A_LoopFilePath)
+			ChangesMade := True
 		}
-;	}
-	SetWorkingDir, %WorkDir%
+	}
+
+	FileMove, %BrowserExe%, %Path%, 1
+		If (ErrorLevel)
+			Die(_MoveToTargetError, BrowserExe)
+
 ;	FileRemoveDir, % PortableDir "\" CurrentVersion, 1
 	FileDelete, %PortableDir%\%CurrentVersion%.manifest
 
+	SetWorkingDir, %WorkDir%
 	WriteReport()
 }
 
