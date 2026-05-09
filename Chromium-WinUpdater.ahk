@@ -1,8 +1,8 @@
 ; TODO: - Check paths via registry or hardcode A_ProgramFiles and A_ProgramW6432
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.12.2
-;@Ahk2Exe-SetProductVersion 1.12.2
+;@Ahk2Exe-SetFileVersion 1.12.3
+;@Ahk2Exe-SetProductVersion 1.12.3
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -356,7 +356,7 @@ CheckWriteAccess() {
 }
 
 GetCurrentVersion() {
-	; FileVersion() by SKAN https://www.autohotkey.com/boards/viewtopic.php?&t=4282
+	; FileVersion() by SKAN https://www.autohotkey.com/boards/viewtopic.php?t=4282
 	If (Sz := DllCall("Version\GetFileVersionInfoSizeW", "WStr", Path, "Int", 0))
 		If (DllCall("Version\GetFileVersionInfoW", "WStr", Path, "Int", 0, "UInt", VarSetCapacity(V, Sz), "Str", V))
 			If (DllCall("Version\VerQueryValueW", "Str", V, "WStr", "\StringFileInfo\040904B0\ProductVersion", "PtrP", pInfo, "Int", 0))
