@@ -1,0 +1,103 @@
+name: Release
+
+on: [workflow_dispatch]
+
+env:
+  app_file: Chromium-WinUpdater
+  app_name: Chromium WinUpdater
+
+jobs:
+  release:
+    runs-on: codeberg-small
+    container:
+      image: scottyhardy/docker-wine:stable
+    steps:
+      - name: Set up dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nodejs zip
+
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Ahk2Exe
+        run: |
+          wget -qO ahk.zip https://github.com/AutoHotkey/AutoHotkey/releases/download/v1.1.37.02/AutoHotkey_1.1.37.02.zip
+          echo "6f3663f7cdd25063c8c8728f5d9b07813ced8780522fd1f124ba539e2854215f ahk.zip" | sha256sum -c || exit 1
+          unzip -j ahk.zip Compiler/Ahk2Exe.exe "Compiler/Unicode 32-bit.bin"
+          rm ahk.zip
+
+      - name: Set up Resource Hacker
+        run: |
+          wget -qO rh.zip https://www.angusj.com/resourcehacker/resource_hacker.zip
+          unzip rh.zip ResourceHacker.exe
+          echo "14a44fe31b04fbcc65e94e80016138a2e9fc9bb6dfcea09b98de57f8a22a1240 ResourceHacker.exe" | sha256sum -c || exit 1
+          rm rh.zip
+
+      - name: Build executable
+        run: |
+          xvfb-run wine Ahk2Exe.exe /silent verbose /in ${{ env.APP_FILE }}.ahk
+
+      - id: virustotal
+        if: ${{ secrets.VT_API_KEY != '' }}
+        name: Scan with VirusTotal
+        uses: https://github.com/crazy-max/ghaction-virustotal@v5
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          files: |
+            ./${{ env.APP_FILE }}.exe
+
+      - name: Get VirusTotal URL
+        if: ${{ secrets.VT_API_KEY != '' }}
+        env:
+          ANALYSIS: ${{ steps.virustotal.outputs.analysis }}
+        run: |
+          VT_URL=$(echo "${ANALYSIS}" | grep -oP ".*exe=\K.*")
+          echo "VT_URL=${VT_URL}" >> $GITHUB_ENV
+          echo "${VT_URL}"
+
+      - name: Create zip
+        run: |
+          APP_VERSION=$(grep -oP "SetFileVersion \K[\d.]+" ${{ env.APP_FILE }}.ahk)
+          echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_ENV
+          mkdir ./dist
+          zip ./dist/${{ env.APP_FILE }}_${APP_VERSION}.zip ${{ env.APP_FILE }}.exe ${{ env.APP_FILE }}.url *.ps1
+
+      - name: Upload artifacts
+        uses: https://data.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          path: |
+            dist/${{ env.APP_FILE }}*.zip
+          retention-days: 7
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          for file in *; do
+            sha256sum "$file" > "$file.sha256"
+          done
+
+      - name: Create Release
+        uses: actions/forgejo-release@v2.11.3
+        with:
+          direction: upload
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          token: ${{ secrets.FORGE_TOKEN }}
+          tag: ${{ env.APP_VERSION }}
+          title: ${{ env.APP_NAME }} ${{ env.APP_VERSION }}
+          override: true
+          prerelease: true
+          release-dir: dist
+          release-notes: |
+            - [x] 
+            - [x] 
+            - [x] 
+            
+            > [!NOTE]
+            > The authenticity of the release `.zip` can be verified with GPG ([instructions](https://codeberg.org/ltguillaume/resources/src/branch/main/signing)).
+            
+            > [!CAUTION]
+            > [Link to VirusTotal Report](${{ env.VT_URL }})
+            > Some antivirus software might mark this as malware. [This is a false positive](https://www.autohotkey.com/docs/v1/FAQ.htm#Virus). Please report the program as safe if possible.
+            > <details><summary>Known problematic vendors</summary><em>Arctic Wolf, DeepInstinct, Gridinsoft, NANO-Antivirus, SecureAge, Skyhigh (SWG), Trapmine, Trellix, VirIT, Zillya.</em></details>
