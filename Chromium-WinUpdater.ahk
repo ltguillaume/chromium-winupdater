@@ -105,7 +105,7 @@ CheckConnection()
 If (UpdateSelf And A_IsCompiled)
 	SelfUpdate()
 If (GetNewVersion())
-	StartUpdate()
+	GetUpdate()
 Exit()
 
 Init() {
@@ -369,7 +369,7 @@ SelfUpdate() {
 	If (ErrorLevel Or !FileExist(SelfUpdateZip))
 		Return Log("SelfUpdate", _DownloadSelfError, True)
 ;MsgBox, Extracting %SelfUpdateZip%
-	VerifyChecksum(SelfUpdateZip)
+	Verify(SelfUpdateZip)
 
 	FileMove, %A_ScriptFullPath%, %A_ScriptFullPath%.wubak, 1
 	If (!Extract(WorkDir "\" SelfUpdateZip, A_ScriptDir))
@@ -405,12 +405,22 @@ GetNewVersion() {
 	Return True
 }
 
-StartUpdate() {
+GetUpdate() {
 	GuiControl,, VerField, %CurrentVersion% %_To%`n%NewVersion% (%Build%)
 	If (Portable Or !Scheduled)
 		GuiShow()
 
+	Download:
 	DownloadUpdate()
+	BrowserWaitClose()
+
+	If (VerCompare(GetLatestVersion(), ">" NewVersion)) {	; Check for newer version since download
+;MsgBox, Redownloading newer version %NewVersion%
+		FileDelete, %SetupFile%
+		Goto, Download
+	}
+	Verify(SetupFile)
+	RunUpdate()
 }
 
 ClearMem() {
@@ -436,16 +446,13 @@ DownloadUpdate() {
 	SetupFile := DownloadInfo1
 	DownloadUrl := DownloadInfo2
 
-	; Verify if already downloaded
+	; Skip if already downloaded
 		If (FileExist(SetupFile))
-			Return VerifyChecksum(SetupFile)
+			Return
 
 	UrlDownloadToFile, %DownloadUrl%, %SetupFile%
 	If (ErrorLevel Or !FileExist(SetupFile))
 		Die(_DownloadSetupError)
-
-	BrowserWaitClose()
-	RunUpdate()
 }
 
 BrowserWaitClose() {
@@ -462,13 +469,9 @@ BrowserWaitClose() {
 		Process, WaitClose, % Proc.ProcessId
 		Goto, Wait
 	}
-
-	; Check for newer version since notification was shown
-	If (Notified And GetNewVersion())
-		BrowserWaitClose()
 }
 
-VerifyChecksum(File) {
+Verify(File) {
 	; Get checksum file
 	RegEx := "i)""name"":\s*""" (Task = _Updater ? Browser "-WinUpdater.+?\.sha256" : "sha256sums\.txt") """.*?""browser_download_url"":\s*""(.+?)"""
 	RegExMatch(ReleaseInfo, RegEx, ChecksumUrl)
@@ -486,9 +489,6 @@ VerifyChecksum(File) {
 		Progress(_CheckingHash)
 	If (Checksum1 <> Hash(File))
 		Die(_ChecksumMatchError, File)
-
-	If (Task = Browser)
-		RunUpdate()
 }
 
 RunUpdate() {
