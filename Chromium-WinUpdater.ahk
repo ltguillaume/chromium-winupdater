@@ -410,11 +410,11 @@ StartUpdate() {
 	If (Portable Or !Scheduled)
 		GuiShow()
 
-	WaitForClose()
+	BrowserWaitClose()
 	DownloadUpdate()
 }
 
-WaitForClose() {
+BrowserWaitClose() {
 	; Notify and wait if browser is running
 	PathDS := StrReplace(Path, "\", "\\")
 	Wait:
@@ -424,13 +424,20 @@ WaitForClose() {
 			Notify(_NewVersionFound)
 			Notified := True
 		}
+		ClearMem()
 		Process, WaitClose, % Proc.ProcessId
 		Goto, Wait
 	}
 
 	; Check for newer version since notification was shown
 	If (Notified And GetNewVersion())
-		WaitForClose()
+		BrowserWaitClose()
+}
+
+ClearMem() {
+	Proc := DllCall("OpenProcess", "UInt", 0x001F0FFF, "Int", 0, "Int", DllCall("GetCurrentProcessId"))
+	DllCall("SetProcessWorkingSetSize", "UInt", Proc, "Int", -1, "Int", -1)
+	DllCall("CloseHandle", "Int", Proc)
 }
 
 DownloadUpdate() {
@@ -502,7 +509,7 @@ RunUpdate() {
 }
 
 ExtractPortable() {
-	WaitForClose()
+	BrowserWaitClose()
 	PreventRunningWhileUpdating()
 ; Extract archive of portable version
 	Progress(_Extracting)
@@ -545,7 +552,7 @@ ExtractPortable() {
 
 Install() {
 	GuiControl, Disable, UpdateButton
-	WaitForClose()
+	BrowserWaitClose()
 	PreventRunningWhileUpdating()
 	Progress(_Installing)
 	If (Scheduled)
@@ -594,7 +601,7 @@ Restart() {
 Exit(Restart = False) {
 ; Wait for close
 	If (!Restart And !ShutdownBlocked And !A_Args.Length() And WinExist("ahk_id " GuiHwnd))
-		WinWaitClose, ahk_id %GuiHwnd%
+		GuiWaitClose()
 	Else
 		Gui, Destroy
 
@@ -771,7 +778,12 @@ GuiShow(Wait = False) {
 		Gui, Flash
 	ControlFocus, SysLink1
 	If (Wait)
-		WinWaitClose, ahk_id %GuiHwnd%
+		GuiWaitClose()
+}
+
+GuiWaitClose() {
+	ClearMem()
+	WinWaitClose, ahk_id %GuiHwnd%
 }
 
 Focus() {
