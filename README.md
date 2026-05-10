@@ -39,7 +39,7 @@ If for some reason WinUpdater is not able to use the user's default `%Temp%` fol
 [Settings]
 WorkDir=D:\Temp
 ```
-To specify the directory of `Chromium-WinUpdater.exe`, type `WorkDir=.`.
+To specify the directory of `Chromium-WinUpdater.exe`, type `WorkDir=.`, or use a relative subfolder like `WorkDir=.\Temp`.
 
 ## Issues
 ### Anti-cheat software
