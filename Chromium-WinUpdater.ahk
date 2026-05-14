@@ -129,9 +129,6 @@ Init() {
 	IniRead, PortableFile, %IniFile%, Settings, PortableFile, *.7z
 	IniWrite, %IgnoreCrlErrors%, %IniFile%, Settings, IgnoreCrlErrors
 	IniWrite, %UpdateSelf%, %IniFile%, Settings, UpdateSelf
-	IniWrite, %ReleaseApiUrl%, %IniFile%, Settings, ReleaseApiUrl
-	IniWrite, %InstallerFile%, %IniFile%, Settings, InstallerFile
-	IniWrite, %PortableFile%, %IniFile%, Settings, PortableFile
 	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%
 	Menu, Tray, NoStandard
 	Menu, Tray, Add, %_Show%, Action
