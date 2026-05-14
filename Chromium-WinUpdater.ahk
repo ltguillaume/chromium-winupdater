@@ -1,8 +1,8 @@
 ; TODO: - Check paths via registry or hardcode A_ProgramFiles and A_ProgramW6432
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.15.1
-;@Ahk2Exe-SetProductVersion 1.15.1
+;@Ahk2Exe-SetFileVersion 1.15.2
+;@Ahk2Exe-SetProductVersion 1.15.2
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -453,9 +453,8 @@ DownloadUpdate() {
 
 BrowserWaitClose() {
 	; Notify and wait if browser is running
-	PathDS := StrReplace(Path, "\", "\\")
 	Wait:
-	For Proc in ComObjGet("winmgmts:").ExecQuery("Select ProcessId from Win32_Process where ExecutablePath=""" PathDS """") {
+	For Proc in ComObjGet("winmgmts:").ExecQuery("Select ProcessId from Win32_Process where ExecutablePath=""" StrReplace(Path, "\", "\\") """") {
 		If (!Notified) {
 			Progress(_NewVersionFound)
 			Notify(_NewVersionFound)
