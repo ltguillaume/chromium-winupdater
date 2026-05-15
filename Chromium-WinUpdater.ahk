@@ -1,8 +1,8 @@
 ; TODO: - Check paths via registry or hardcode A_ProgramFiles and A_ProgramW6432
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.15.2
-;@Ahk2Exe-SetProductVersion 1.15.2
+;@Ahk2Exe-SetFileVersion 1.16.0
+;@Ahk2Exe-SetProductVersion 1.16.0
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -122,11 +122,11 @@ Init() {
 	IniRead, IgnoreCrlErrors, %IniFile%, Settings, IgnoreCrlErrors, 0
 	IniRead, UpdateSelf, %IniFile%, Settings, UpdateSelf, 1	; Using "False" in .ini causes If (UpdateSelf) to be True
 	IniRead, WorkDir, %IniFile%, Settings, WorkDir, %A_Temp%
-	IniRead, ReleaseApiUrl, %IniFile%, Settings, ReleaseApiUrl, https://api.github.com/repos/macchrome/winchrome/releases/latest	; Defaults to Ungoogled Chromium
-	IniRead, InstallerFile, %IniFile%, Settings, InstallerFile, *.exe
+	IniRead, ReleaseApiUrl, %IniFile%, Settings, ReleaseApiUrl, https://api.github.com/repos/ungoogled-software/ungoogled-chromium-windows/releases/latest	; Defaults to Ungoogled Chromium
+	IniRead, InstallerFile, %IniFile%, Settings, InstallerFile, *x64.exe
 	If (InstallerFile = "NONE")
 		IsPortable := True
-	IniRead, PortableFile, %IniFile%, Settings, PortableFile, *.7z
+	IniRead, PortableFile, %IniFile%, Settings, PortableFile, *x64.zip
 	IniWrite, %IgnoreCrlErrors%, %IniFile%, Settings, IgnoreCrlErrors
 	IniWrite, %UpdateSelf%, %IniFile%, Settings, UpdateSelf
 	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%
