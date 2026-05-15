@@ -8,15 +8,17 @@ An attempt to make updating Chromium for Windows much easier. This is a fork of 
 ![Chromium WinUpdater](SCREENSHOT.png)
 
 ## Getting started
-### Choosing your release
-- WinUpdater by default downloads the 64-bit release of [Ungoogled Chromium by Marmaduke](https://github.com/macchrome/winchrome/releases).
-- Alternatively, you can use the (official?) [release by teeminus et al](https://github.com/ungoogled-software/ungoogled-chromium/releases) or [Cromite by uazo](https://github.com/uazo/cromite/releases).
-To do this, copy/rename `Chromium-WinUpdater.template.ini` to `Chromium-WinUpdater.ini`, then uncomment the 3 lines of the desired alternative release (by removing the `;`).
-  __NOTE:__ WinUpdater has not been tested with other Chromium releases, but you can try changing the three variables yourself and see if it works, or ask for help by creating an [issue](https://codeberg.org/ltguillaume/chromium-winupdater/issues/).
+### Choosing the release
+WinUpdater downloads the 64-bit release of [Ungoogled Chromium](https://github.com/ungoogled-software/ungoogled-chromium-windows) by default. You can use other releases via the settings in the `.ini` file:
+1. Copy/rename `Chromium-WinUpdater.template.ini` to `Chromium-WinUpdater.ini`
+2. Uncomment the 3 lines of the desired alternative build by removing the `;` before  
+   `ReleaseApiUrl=`, one `InstallerFile=` and one `PortableFile=`, depending on your Windows architecture (arm64/x64/x86 if available).
+
+WinUpdater has not been tested with other Chromium releases, but you can try changing the three variables yourself and see if it works, or ask for help by [creating an issue](https://codeberg.org/ltguillaume/chromium-winupdater/issues/).
 ### Chromium Setup
-If you have Chromium installed (e.g. via [xxx.x.xxxx.xxx_ungoogled_mini_installer.exe](https://github.com/macchrome/winchrome/releases/latest)), just run `Chromium-WinUpdater.exe` from any location. If an update is available, the new mini installer will be downloaded and installed.
+If you have Chromium installed (e.g. via [xxx.x.xxxx.xxx_ungoogled_mini_installer.exe](https://github.com/ungoogled-software/ungoogled-chromium-windows/releases/tag/latest)), just run `Chromium-WinUpdater.exe` from any location. If an update is available, the new mini installer will be downloaded and installed.
 ### Chromium Portable
-- If you want to run the portable version of Chromium, download and extract the latest release of your choice (e.g. Marmaduke's [`ungoogled-chromium-xxx.x.xxxx.xxx_Win64.7z`](https://github.com/macchrome/winchrome/releases/latest)). Put `Chromium-WinUpdater.exe` in the same folder.
+- If you want to run the portable version of Chromium, download and extract the latest release of your choice (e.g. [`ungoogled-chromium-xxx.x.xxxx.xxx_Win64.zip`](https://github.com/ungoogled-software/ungoogled-chromium-windows/releases/tag/latest)). Put `Chromium-WinUpdater.exe` in the same folder.
 - Then, if you wish to perform an update, just run `Chromium-WinUpdater.exe`.
 ### Scheduled updates
 - When Chromium is __installed__, you can run WinUpdater and select the option to automatically check for updates. This will prompt for administrator permissions and a blue (PowerShell) window will notify you of the result. The scheduled task will run while the _current_ user account is logged in (at 1 minute after login, and every 24 hours).
