@@ -1,5 +1,3 @@
-; TODO: - Check paths via registry or hardcode A_ProgramFiles and A_ProgramW6432
-
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
 ;@Ahk2Exe-SetFileVersion 1.17.0
 ;@Ahk2Exe-SetProductVersion 1.17.0
@@ -664,8 +662,9 @@ Download(URL) {
 	CurrentDomain := SubStr(URL, 1, InStr(URL, "/",,, 3) - 1)
 	SetTimer, CrlCheck
 	Try {
+		Random, Num, 1, 1024
 		Object := ComObjCreate("Msxml2.XMLHTTP")
-		Object.open("GET", URL, false)
+		Object.open("GET", URL "?i=" Num, false)
 		Object.setRequestHeader("User-Agent", "WinUpdater")
 		Object.send()
 		Result := Object.responseText
