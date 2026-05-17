@@ -219,8 +219,8 @@ CheckPaths() {
 	Else {
 		IniRead, Path, %IniFile%, Settings, Path, 0	; Need to use 0, because False would become a string
 		If (!Path) {
-;			RegRead, Path, HKLM\SOFTWARE\Clients\StartMenuInternet\%Browser%\shell\open\command	; %Browser% should be like "Chromium.WEQ36YVLUPQM5N24EOOSTXAUJM"
-;			If (ErrorLevel)
+			RegRead, Path, HKLM\SOFTWARE\Clients\StartMenuInternet\%Browser%\shell\open\command	; %Browser% may be like "Chromium.WEQ36YVLUPQM5N24EOOSTXAUJM"
+			If (ErrorLevel Or !InStr(Path, BrowserExe))
 				Path := LocalAppData "\" Browser "\Application\" BrowserExe
 		}
 		Path := Trim(Path, """")	; FileExist chokes on double quotes
@@ -506,14 +506,14 @@ RunUpdate() {
 	If (IsPortable)
 		ExtractPortable()
 	Else {
-;		If (A_IsAdmin)
+		If (A_IsAdmin)
 			Install()
-;		Else {
-;			Progress(_Downloaded)
-;			Gui, Add, Button, vUpdateButton gInstall w148 x86 y125 Default, %_StartUpdate%
-;			GuiControl, Move, TaskSetField, y161
-;			GuiShow(True)	; Wait for user action
-;		}
+		Else {
+			Progress(_Downloaded)
+			Gui, Add, Button, vUpdateButton gInstall w148 x86 y125 Default, %_StartUpdate%
+			GuiControl, Move, TaskSetField, y161
+			GuiShow(True)	; Wait for user action
+		}
 	}
 }
 
@@ -646,8 +646,8 @@ Die(Error, Var = False, Show = True) {
 	GuiControl, Hide, LogField
 	GuiControl, Disable, TaskSetField
 	GuiControl, Hide, TaskSetField
-	Gui, Font, s38
-	Gui, Add, Text, x264 y-2 cYellow, % Chr("0x26A0")
+	Gui, Font, s32
+	Gui, Add, Text, x249 y-2 cYellow, % Chr("0x26A0")
 	Gui, Font, s9
 	Msg := Msg " " (ChangesMade ? _ChangesMade : _NoChangesMade) "`n`n" _GoToWebsite
 	Gui, Add, Link, gAction x15 y81 w290 cCCCCCC, %Msg%
