@@ -1,8 +1,8 @@
 ; TODO: - Check paths via registry or hardcode A_ProgramFiles and A_ProgramW6432
 
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.16.0
-;@Ahk2Exe-SetProductVersion 1.16.0
+;@Ahk2Exe-SetFileVersion 1.17.0
+;@Ahk2Exe-SetProductVersion 1.17.0
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -55,7 +55,7 @@ Global _Updater       := Browser " WinUpdater"
 , _Done               := " Done."
 , _GetPathError       := "Could not find the path to " Browser ".`nBrowse to " BrowserExe " in the following dialog."
 , _SelectFileTitle    := _Updater " - Select " BrowserExe "..."
-, _WritePermError     := "Could not write to`n{}. Please check the current user account's write permissions for this folder."
+, _WritePermError     := "Could not write to {}. Please check the current user account's write permissions for this folder."
 , _CopyError          := "Could not copy {}"
 , _GetBuildError      := "Could not determine the build type of " Browser "."
 , _GetVersionError    := "Could not determine the current version of`n{}"
@@ -77,7 +77,7 @@ Global _Updater       := Browser " WinUpdater"
 , _Extracting         := "Extracting portable version..."
 , _StartUpdate        := "  &Start update  "
 , _Installing         := "Installing new version..."
-, _UpdateError        := "Error while updating."
+, _UpdateError        := "Error while updating{}."
 , _SilentUpdateError  := "Silent update did not complete.`nDo you want to run the interactive installer?"
 , _NewVersionFound    := "New version available.`nClose " Browser " to continue..."
 , _NoNewVersion       := "No new version found."
@@ -227,7 +227,7 @@ CheckPaths() {
 	}
 
 	If (FileExist(Path ".wubak")) {
-;MsgBox, Previous update may have been interrupted, restoring chrome.exe.wubak
+;MsgBox, Previous update may have been interrupted, restoring %BrowserExe%.wubak
 		FileMove, %Path%.wubak, %Path%, 1
 		If (ErrorLevel And !A_IsAdmin And !Portable)
 			RunElevated()
@@ -529,7 +529,7 @@ ExtractPortable() {
 	If (!FileExist("chrome.exe")) {
 		Loop, Files, *, D
 		{
-			If (FileExist(A_LoopFilePath "\chrome.exe")) {
+			If (FileExist(A_LoopFilePath "\" BrowserExe)) {
 				SetWorkingDir, %A_LoopFilePath%
 				Break
 			}
@@ -574,7 +574,7 @@ Install() {
 	; Run silent setup
 			RunWait, %SetupFile% %SetupParams%,, UseErrorLevel
 			If (ErrorLevel Or !FileExist(Folder "\" NewVersion))
-				Die(_UpdateError (ErrorLevel ? " " A_LastError : ""))
+				Die(StrReplace(_UpdateError, "{}", " (" A_LastError ")"))
 			Else
 				WriteReport()
 }
@@ -646,6 +646,7 @@ Die(Error, Var = False, Show = True) {
 	GuiControl, Hide, LogField
 	GuiControl, Disable, TaskSetField
 	GuiControl, Hide, TaskSetField
+	GuiControl, Hide, UpdateButton
 	Gui, Font, s32
 	Gui, Add, Text, x249 y-2 cYellow, % Chr("0x26A0")
 	Gui, Font, s9
