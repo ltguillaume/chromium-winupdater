@@ -41,7 +41,6 @@ Global Args       := ""
 ; Strings
 Global _Updater       := Browser " WinUpdater"
 , _Show               := "Show"
-;, _PortableHelp       := "Portable Help"
 , _UpdaterHelp        := "WinUpdater Help"
 , _Settings           := "Settings"
 , _Exit               := "Exit"
@@ -132,7 +131,6 @@ Init() {
 	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%
 	Menu, Tray, NoStandard
 	Menu, Tray, Add, %_Show%, Action
-;	Menu, Tray, Add, %_PortableHelp%, Action
 	Menu, Tray, Add, %_UpdaterHelp%, Action
 	Menu, Tray, Add, %_Settings%, Action
 	Menu, Tray, Add, %_Exit%, Action
@@ -284,7 +282,6 @@ ThisUpdaterRunning() {
 }
 
 CheckWriteAccess() {
-;	If (!FileExist(A_ScriptDir "\" BrowserExe)) {
 		FileAppend,, %IniFile%
 		If (!ErrorLevel) {
 			If (WorkDir <> A_Temp) {
@@ -294,7 +291,6 @@ CheckWriteAccess() {
 			}
 			Return
 		}
-;	}
 
 	AppData := LocalAppData "\" Browser "\WinUpdater"
 
@@ -575,29 +571,17 @@ Install() {
 	Progress(_Installing)
 	If (Scheduled)
 		Notify(_Installing, CurrentVersion " " _To " v" NewVersion, 3000)
-;	SetupParams := StrReplace(SetupParams, "{}", Folder)
-;MsgBox, %SetupFile% %SetupParams%
 	; Run silent setup
-;	RunWait, %SetupFile% %SetupParams% /S,, UseErrorLevel
-;	If (!ErrorLevel)
-;		WriteReport()
-;	Else {
-;		MsgBox, 52, %_Updater%, %_SilentUpdateError%
-;		IfMsgBox, No
-;			Progress(_UpdateError, True)
-;		Else {
 			RunWait, %SetupFile% %SetupParams%,, UseErrorLevel
 			If (ErrorLevel Or !FileExist(Folder "\" NewVersion))
 				Die(_UpdateError (ErrorLevel ? " " A_LastError : ""))
 			Else
 				WriteReport()
-;		}
-;	}
 }
 
 PreventRunningWhileUpdating() {
 	If (A_IsAdmin Or IsPortable)
-	FileMove, %Path%, %Path%.wubak, 1
+		FileMove, %Path%, %Path%.wubak, 1
 }
 
 WriteReport() {
@@ -646,12 +630,6 @@ Exit(Restart = False) {
 
 	If (Restart)
 		Run, % A_ScriptFullPath StrReplace(Args, "/Scheduled")
-;	Else If (IsPortable And RunningPortable) {
-;		A_Args.RemoveAt(1)	; Remove "/Portable" from array
-;		CheckArgs()
-;MsgBox, %PortableBrowser% %Args%
-;		Run, %PortableBrowser% %Args%
-;	}
 
 	ExitApp
 }
