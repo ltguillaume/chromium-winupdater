@@ -327,14 +327,14 @@ GetCurrentVersion() {
 	If (!CurrentVersion)
 		Die(_GetVersionError, Path)
 
-	GetCurrentBuild()
+	Build := GetCurrentBuild()
 
 	GuiControl,, VerField, %CurrentVersion%
 }
 
 GetCurrentBuild() {
 	RegExMatch(ReleaseApiUrl, "i)/repos/([^/]+)/", User)
-	Build := User1
+	Return User1
 }
 
 CheckConnection() {
@@ -413,12 +413,12 @@ GetUpdate() {
 	DownloadUpdate()
 	BrowserWaitClose()
 
-	If (VerCompare(GetNewVersion(), ">" NewVersion)) {	; Check for newer version since download
+	If (Waited And VerCompare(GetNewVersion(), ">" NewVersion)) {	; Check for newer version since download
 ;MsgBox, Redownloading newer version %NewVersion%
 		FileDelete, %SetupFile%
 		Goto, Download
 	}
-;	Verify(SetupFile)
+	Verify(SetupFile)
 	RunUpdate()
 }
 
@@ -434,15 +434,15 @@ DownloadUpdate() {
 	If (!DownloadInfo1 Or !DownloadInfo2)
 		Die(_FindUrlError)
 
-	; Download setup file
-	Progress(_Downloading)
 	SetupFile := DownloadInfo1
 	DownloadUrl := DownloadInfo2
 
 	; Skip if already downloaded
-		If (FileExist(SetupFile))
-			Return
+	If (FileExist(SetupFile))
+		Return
 
+	; Download setup file
+	Progress(_Downloading)
 	UrlDownloadToFile, %DownloadUrl%, %SetupFile%
 	If (ErrorLevel Or !FileExist(SetupFile))
 		Die(_DownloadSetupError)
@@ -461,6 +461,8 @@ BrowserWaitClose() {
 		Process, WaitClose, % Proc.ProcessId
 		Goto, Wait
 	}
+
+	Return Notified
 }
 
 ReleaseMem() {
@@ -470,6 +472,13 @@ ReleaseMem() {
 }
 
 Verify(File) {
+	If (Task <> _Updater) {
+		If (InStr(ReleaseApiUrl, "api.github.com"))
+			Goto, GitHub
+		Else
+			Return
+	}
+
 	; Get checksum file
 	RegEx := "i)""name"":\s*""" (Task = _Updater ? Browser "-WinUpdater.+?\.sha256" : "sha256sums\.txt") """.*?""browser_download_url"":\s*""(.+?)"""
 	RegExMatch(ReleaseInfo, RegEx, ChecksumUrl)
@@ -479,6 +488,13 @@ Verify(File) {
 
 	; Get checksum for downloaded file
 	RegExMatch(Checksum, "i)(\S+?)\s+\*?\Q" File "\E", Checksum)
+	Goto, Compare
+
+	GitHub:
+	RegExMatch(ReleaseInfo, "i)""name"":\s*""" File """.*?""digest"":\s*""sha256:(.+?)""", Checksum)
+
+	Compare:
+;MsgBox, %Checksum1%
 	If (!Checksum1)
 		Die(_FindChecksumError)
 
