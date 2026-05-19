@@ -1,3 +1,4 @@
+[Getting started](#getting-started) • [Settings](#settings) • [Issues](#issues) • [Building](#building) • [Credits](#credits)
 <img src="Chromium-WinUpdater.ico" align="right">
 
 # Chromium WinUpdater
