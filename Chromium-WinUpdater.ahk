@@ -180,7 +180,7 @@ Action(ItemName, GuiEvent, LinkIndex) {
 			If (Died Or Done)
 				GuiClose()
 			Else
-				GuiShow()
+				Gui, Show, AutoSize
 			Return
 		Default:
 			; Links in error dialog
