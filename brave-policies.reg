@@ -1,0 +1,30 @@
+Windows Registry Editor Version 5.00
+; https://support.brave.app/hc/en-us/articles/360039248271-Group-Policy
+; brave version: 144.1.88.37
+
+[HKEY_LOCAL_MACHINE\Software\Policies\BraveSoftware\Brave]
+"BraveP3AEnabled"=dword:00000000
+"BraveRewardsDisabled"=dword:00000001
+"BraveStatsPingEnabled"=dword:00000000
+"BraveWebDiscoveryEnabled"=dword:00000000
+"BrowserNetworkTimeQueriesEnabled"=dword:00000000
+"DefaultBraveAdblockSetting"=dword:00000002 ; On restart, re-enables to Standard ads blocking or leaves Aggressive enabled
+"DefaultBraveHttpsUpgradeSetting"=dword:00000002 ; Strict
+"MetricsReportingEnabled"=dword:00000000
+;"DomainReliabilityAllowed"=dword:00000000 ; Already disabled with MetricsReportingEnabled
+;"FeedbackSurveysEnabled"=dword:00000000   ; Already disabled with MetricsReportingEnabled
+;"NTPCustomBackgroundEnabled"=dword:00000000 ; Fully disable Brave's and custom backgrounds
+"SafeBrowsingDeepScanningEnabled"=dword:00000000
+"SafeBrowsingExtendedReportingEnabled"=dword:00000000
+"SafeBrowsingSurveysEnabled"=dword:00000000
+"TabCompareSettings"=dword:00000002
+"UrlKeyedAnonymizedDataCollectionEnabled"=dword:00000000 ; Probably unnecessary
+"WebRtcEventLogCollectionAllowed"=dword:00000000
+"WebRtcIPHandling"="disable_non_proxied_udp"
+"WebRtcTextLogCollectionAllowed"=dword:00000000
+
+[HKEY_LOCAL_MACHINE\Software\Policies\BraveSoftware\Brave\Recommended]
+"BackgroundModeEnabled"=dword:00000000
+"HighEfficiencyModeEnabled"=dword:00000001
+"NetworkPredictionOptions"=dword:00000000
+"TorDisabled"=dword:00000001

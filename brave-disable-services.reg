@@ -1,0 +1,11 @@
+Windows Registry Editor Version 5.00
+; https://support.brave.app/hc/en-us/articles/360039248271-Group-Policy
+; brave version: 144.1.88.37
+; Forcibly disable Brave extras in new and existing profiles
+
+[HKEY_LOCAL_MACHINE\Software\Policies\BraveSoftware\Brave]
+"BraveAIChatEnabled"=dword:00000000  ; Not disabled if in Recommended
+"BraveNewsDisabled"=dword:00000001 ; Fully disabled if in Recommended
+"BraveTalkDisabled"=dword:00000001 ; Fully disabled if in Recommended
+"BraveVPNDisabled"=dword:00000001    ; Not disabled if in Recommended
+"BraveWalletDisabled"=dword:00000001 ; Not disabled if in Recommended
