@@ -16,13 +16,14 @@ WinUpdater downloads the 64-bit release of [Ungoogled Chromium](https://github.c
    `ReleaseApiUrl=`, one `InstallerFile=` and one `PortableFile=`, depending on your Windows architecture (arm64/x64/x86 if available).
 
 WinUpdater has not been tested with other Chromium releases, but you can try changing the three variables yourself and see if it works, or ask for help by [creating an issue](https://codeberg.org/ltguillaume/chromium-winupdater/issues/).
+There is some additional information about [using Brave](https://codeberg.org/ltguillaume/chromium-winupdater/src/branch/brave).
 ### Chromium Setup
-If you have Chromium installed (e.g. via [xxx.x.xxxx.xxx_ungoogled_mini_installer.exe](https://github.com/ungoogled-software/ungoogled-chromium-windows/releases/tag/latest)), just run `Chromium-WinUpdater.exe` from any location. If an update is available, the new mini installer will be downloaded and installed.
+If you have Chromium installed (e.g. via [ungoogled-chromium_*.exe](https://github.com/ungoogled-software/ungoogled-chromium-windows/releases/latest)), just run `Chromium-WinUpdater.exe` from any location. If an update is available, the new mini installer will be downloaded and installed.
 ### Chromium Portable
-- If you want to run the portable version of Chromium, download and extract the latest release of your choice (e.g. [`ungoogled-chromium-xxx.x.xxxx.xxx_Win64.zip`](https://github.com/ungoogled-software/ungoogled-chromium-windows/releases/tag/latest)). Put `Chromium-WinUpdater.exe` in the same folder.
+- If you want to run the portable version of Chromium, download and extract the latest release of your choice (e.g. [`ungoogled-chromium-*.zip`](https://github.com/ungoogled-software/ungoogled-chromium-windows/releases/latest)). Put `Chromium-WinUpdater.exe` in the same folder.
 - Then, if you wish to perform an update, just run `Chromium-WinUpdater.exe`.
 ### Scheduled updates
-- When Chromium is __installed__, you can run WinUpdater and select the option to automatically check for updates. This will prompt for administrator permissions and a blue (PowerShell) window will notify you of the result. The scheduled task will run while the _current_ user account is logged in (at 1 minute after login, and every 24 hours).
+- If Chromium is __installed__, you can run WinUpdater and select the option to automatically check for updates. This will prompt for administrator permissions and a blue (PowerShell) window will notify you of the result. The scheduled task will run while the _current_ user account is logged in (at 1 minute after login, and every 24 hours).
 - If your account has __administrator permissions__, the update will be fully automatic. If not, the update will be downloaded and you will be asked by WinUpdater to start the update (administrator permissions required).
 - If Chromium is already __running__, the updater will notify you of the new version. The update will start as soon as you close the browser.
 
