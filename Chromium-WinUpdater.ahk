@@ -1,6 +1,6 @@
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.18.0
-;@Ahk2Exe-SetProductVersion 1.18.0
+;@Ahk2Exe-SetFileVersion 1.19.0
+;@Ahk2Exe-SetProductVersion 1.19.0
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -33,8 +33,10 @@ Global Args       := ""
 , SettingTask     := A_Args[1] = "/CreateTask" Or A_Args[1] = "/RemoveTask"
 , ChangesMade     := False
 , Done            := False
-, IniFile, LocalAppData, Path, Folder, ProgramW6432, WorkDir, ExtractDir, Repo, Build, IgnoreCrlErrors, UpdateSelf, Task, CurrentDomain, CurrentUpdaterVersion, ReleaseApiUrl
-, InstallerFile, PortableFile, ReleaseInfo, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton, ShutdownBlocked, Died
+, IniFile, LocalAppData, Path, Folder, ProgramW6432, WorkDir, ExtractDir, Build, IgnoreCrlErrors, UpdateSelf, Task, CurrentDomain, CurrentUpdaterVersion, ReleaseApiUrl
+, InstallerFile, PortableFile, ReleaseInfo, BaseVersion, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton, ShutdownBlocked, Died
+
+GetSettings()
 
 ; Strings
 Global _Updater       := Browser " WinUpdater"
@@ -51,7 +53,7 @@ Global _Updater       := Browser " WinUpdater"
 , _SetTask            := "Schedule a task for automatic update checks while`nuser {} is logged on."
 , _SettingTask        := (A_Args[1] = "/CreateTask" ? "Creating" : "Removing") " scheduled task..."
 , _Done               := " Done."
-, _GetPathError       := "Could not find the path to " Browser ".`nBrowse to " BrowserExe " in the following dialog."
+, _GetPathError       := "Could not find the browser path.`nBrowse to {} in the following dialog."
 , _SelectFileTitle    := _Updater " - Select " BrowserExe "..."
 , _WritePermError     := "Could not write to {}. Please check the current user account's write permissions for this folder."
 , _CopyError          := "Could not copy {}"
@@ -105,6 +107,24 @@ If (GetNewVersion())
 	GetUpdate()
 Exit()
 
+GetSettings() {
+	SplitPath, A_ScriptFullPath,,,, BaseName
+	IniFile := A_ScriptDir "\" BaseName ".ini"
+	IniRead, IgnoreCrlErrors, %IniFile%, Settings, IgnoreCrlErrors, 0
+	IniRead, UpdateSelf, %IniFile%, Settings, UpdateSelf, 1	; Using "False" in .ini causes If (UpdateSelf) to be True
+	IniRead, WorkDir, %IniFile%, Settings, WorkDir, %A_Temp%
+	IniRead, InstallerFile, %IniFile%, Settings, InstallerFile, *x64.exe
+	IniRead, PortableFile, %IniFile%, Settings, PortableFile, *x64.zip
+	IniRead, ReleaseApiUrl, %IniFile%, Settings, ReleaseApiUrl, https://api.github.com/repos/ungoogled-software/ungoogled-chromium-windows/releases/latest	; Defaults to Ungoogled Chromium
+	If (InStr(ReleaseApiUrl, "brave")) {
+		Browser         := "Brave"	; There's a 301 redirect from ltguillaume/brave-winupdater to ltguillaume/chromium-winupdater on Codeberg
+		BrowserExe      := "brave.exe"
+		PortableDir     := A_ScriptDir "\" (FileExist(A_ScriptDir "\" BrowserExe) ? "" : FileExist(A_ScriptDir "\Bin\" BrowserExe) ? "Bin" : "Application")
+		PortableBrowser := PortableDir "\" BrowserExe
+		IsPortable      := FileExist(PortableBrowser)
+	}
+}
+
 Init() {
 	FileGetVersion, CurrentUpdaterVersion, %A_ScriptFullPath%
 	CurrentUpdaterVersion := RegExReplace(CurrentUpdaterVersion, "(\.0)+$")
@@ -114,16 +134,8 @@ Init() {
 	EnvGet, LocalAppData, LocalAppData
 	If (LocalAppData = "")
 		LocalAppData := "?"
-	SplitPath, A_ScriptFullPath,,,, BaseName
-	IniFile := A_ScriptDir "\" BaseName ".ini"
-	IniRead, IgnoreCrlErrors, %IniFile%, Settings, IgnoreCrlErrors, 0
-	IniRead, UpdateSelf, %IniFile%, Settings, UpdateSelf, 1	; Using "False" in .ini causes If (UpdateSelf) to be True
-	IniRead, WorkDir, %IniFile%, Settings, WorkDir, %A_Temp%
-	IniRead, ReleaseApiUrl, %IniFile%, Settings, ReleaseApiUrl, https://api.github.com/repos/ungoogled-software/ungoogled-chromium-windows/releases/latest	; Defaults to Ungoogled Chromium
-	IniRead, InstallerFile, %IniFile%, Settings, InstallerFile, *x64.exe
 	If (InstallerFile = "NONE")
 		IsPortable := True
-	IniRead, PortableFile, %IniFile%, Settings, PortableFile, *x64.zip
 	IniWrite, %IgnoreCrlErrors%, %IniFile%, Settings, IgnoreCrlErrors
 	IniWrite, %UpdateSelf%, %IniFile%, Settings, UpdateSelf
 	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%
@@ -257,8 +269,8 @@ CheckPaths() {
 	}
 
 	If (!FileExist(Path)) {
-		MsgBox, 48, %_Updater%, %_GetPathError%
-		FileSelectFile, Path, 3, %Path%, %_SelectFileTitle%, %BrowserExe%
+		MsgBox, 48, %_Updater%, % StrReplace(_GetPathError, "{}", BrowserExe)
+		FileSelectFile, Path, 3, %A_ScriptDir%, %_SelectFileTitle%, %BrowserExe%
 		If (ErrorLevel)
 			ExitApp
 		Else {
@@ -331,6 +343,11 @@ GetCurrentVersion() {
 		If (DllCall("Version\GetFileVersionInfoW", "WStr", Path, "Int", 0, "UInt", VarSetCapacity(V, Sz), "Str", V))
 			If (DllCall("Version\VerQueryValueW", "Str", V, "WStr", "\StringFileInfo\040904B0\ProductVersion", "PtrP", pInfo, "Int", 0))
 				CurrentVersion := StrGet(pInfo, "UTF-16")
+
+	If (Browser = "Brave") {
+		BaseVersion := SubStr(CurrentVersion, 1, InStr(CurrentVersion, "."))
+		CurrentVersion := SubStr(CurrentVersion, InStr(CurrentVersion, ".") + 1)
+	}
 
 	If (!CurrentVersion)
 		Die(_GetVersionError, Path)
@@ -569,7 +586,8 @@ ExtractPortable() {
 	If (ErrorLevel)
 		Die(_MoveToTargetError, BrowserExe)
 
-;	FileRemoveDir, % PortableDir "\" CurrentVersion, 1
+	If (Browser = "Brave")
+		FileRemoveDir, % PortableDir "\" BaseVersion CurrentVersion, 1
 	FileDelete, %PortableDir%\%CurrentVersion%.manifest
 
 	SetWorkingDir, %WorkDir%
@@ -742,7 +760,7 @@ Extract(From, To) {
 }
 
 GetLatestVersion() {
-	ReleaseUrl := (Task = _Updater ? "https://codeberg.org/api/v1/repos/ltguillaume/" Browser "-winupdater/releases/latest" : StrReplace(ReleaseApiUrl, "{}", Repo))
+	ReleaseUrl := (Task = _Updater ? "https://codeberg.org/api/v1/repos/ltguillaume/" Browser "-winupdater/releases/latest" : ReleaseApiUrl)
 	ReleaseInfo := Download(ReleaseUrl)
 	If (!ReleaseInfo) {
 		If (Task = _Updater)
