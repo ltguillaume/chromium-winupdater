@@ -56,6 +56,8 @@ You may encounter a `Security Alert: Revocation information for the Security cer
 [Settings]
 IgnoreCrlErrors=1
 ```
+### Asking for help
+If you experience another issue, you can search the problems (and solutions) reported in the [WinUpdater Issues](https://codeberg.org/ltguillaume/chromium-winupdater/issues), or create an issue yourself.
 
 ## Building
 - Requires [7-Zip](https://7-zip.org/download.html) standalone console version (`7za.exe` from the __7-Zip Extra__ download)
