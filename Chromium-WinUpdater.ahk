@@ -23,6 +23,7 @@ Global Args       := ""
 , PortableDir     := A_ScriptDir "\" (FileExist(A_ScriptDir "\" BrowserExe) ? "" : FileExist(A_ScriptDir "\Bin\" BrowserExe) ? "Bin" : "Application")
 , PortableBrowser := PortableDir "\" BrowserExe
 , ConnectCheckUrl := "https://github.com/manifest.json"
+, UpdaterApiUrl   := "https://codeberg.org/api/v1/repos/ltguillaume/chromium-winupdater/releases/latest"
 , SetupParams     := "--do-not-launch-chrome"
 , TaskCreateFile  := "ScheduledTask-Create.ps1"
 , TaskRemoveFile  := "ScheduledTask-Remove.ps1"
@@ -117,7 +118,7 @@ GetSettings() {
 	IniRead, PortableFile, %IniFile%, Settings, PortableFile, *x64.zip
 	IniRead, ReleaseApiUrl, %IniFile%, Settings, ReleaseApiUrl, https://api.github.com/repos/ungoogled-software/ungoogled-chromium-windows/releases/latest	; Defaults to Ungoogled Chromium
 	If (InStr(ReleaseApiUrl, "brave")) {
-		Browser         := "Brave"	; There's a 301 redirect from ltguillaume/brave-winupdater to ltguillaume/chromium-winupdater on Codeberg
+		Browser         := "Brave"
 		BrowserExe      := "brave.exe"
 		PortableDir     := A_ScriptDir "\" (FileExist(A_ScriptDir "\" BrowserExe) ? "" : FileExist(A_ScriptDir "\Bin\" BrowserExe) ? "Bin" : "Application")
 		PortableBrowser := PortableDir "\" BrowserExe
@@ -201,7 +202,7 @@ Action(ItemName, GuiEvent, LinkIndex) {
 			If (LinkIndex = 2)
 				ItemName := "WinUpdater"
 
-			Url := "https://codeberg.org/ltguillaume/" Browser "-" StrReplace(ItemName, " Help") "#readme"
+			Url := "https://codeberg.org/ltguillaume/chromium-winupdater#readme"
 			Try Run, %Url%
 			Catch {
 				RegRead, DefBrowser, HKCR, .html
@@ -760,7 +761,7 @@ Extract(From, To) {
 }
 
 GetLatestVersion() {
-	ReleaseUrl := (Task = _Updater ? "https://codeberg.org/api/v1/repos/ltguillaume/" Browser "-winupdater/releases/latest" : ReleaseApiUrl)
+	ReleaseUrl := (Task = _Updater ? UpdaterApiUrl : ReleaseApiUrl)
 	ReleaseInfo := Download(ReleaseUrl)
 	If (!ReleaseInfo) {
 		If (Task = _Updater)
