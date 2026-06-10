@@ -1,6 +1,6 @@
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.19.0
-;@Ahk2Exe-SetProductVersion 1.19.0
+;@Ahk2Exe-SetFileVersion 1.19.1
+;@Ahk2Exe-SetProductVersion 1.19.1
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -437,14 +437,16 @@ GetUpdate() {
 
 	Download:
 	DownloadUpdate()
-	BrowserWaitClose()
+	Waited := BrowserWaitClose()
 
-	If (Waited And VerCompare(GetNewVersion(), ">" NewVersion)) {	; Check for newer version since download
-;MsgBox, Redownloading newer version %NewVersion%
-		FileDelete, %SetupFile%
-		Goto, Download
+	If (Waited) {
+		If (VerCompare(GetNewVersion(), ">" NewVersion)) {	; Check for newer version since download
+			FileDelete, %SetupFile%
+			Goto, Download
+		} Else
+			Verify(SetupFile)	; Verify hash to make sure the setup file hasn't been tampered with since download
 	}
-	Verify(SetupFile)
+
 	RunUpdate()
 }
 
@@ -456,6 +458,7 @@ DownloadUpdate() {
 ;MsgBox, %Filename%
 ;FileAppend, %ReleaseInfo%, %WorkDir%\ReleaseInfo.txt
 	RegExMatch(ReleaseInfo, "i)""name"":\s*""(" Filename ")"".*?""browser_download_url"":\s*""(.+?)""", DownloadInfo)
+
 ;MsgBox, Downloading`n%DownloadInfo2%`nto`n%DownloadInfo1%
 	If (!DownloadInfo1 Or !DownloadInfo2)
 		Die(_FindUrlError)
@@ -476,7 +479,7 @@ DownloadUpdate() {
 
 BrowserWaitClose() {
 	; Notify and wait if browser is running
-	Wait:
+	BrowserWait:
 	For Proc in ComObjGet("winmgmts:").ExecQuery("Select ProcessId from Win32_Process where ExecutablePath=""" StrReplace(Path, "\", "\\") """") {
 		If (!Notified) {
 			Progress(_NewVersionFound)
@@ -484,11 +487,20 @@ BrowserWaitClose() {
 			Notified := True
 		}
 		ReleaseMem()
-		Process, WaitClose, % Proc.ProcessId
-		Goto, Wait
+		ProcessWaitClose(Proc.ProcessId)
+		Goto, BrowserWait
 	}
 
 	Return Notified
+}
+
+ProcessWaitClose(ProcessId) {
+	ProcessWait:
+	Process, Exist, %ProcessId%
+	If (ErrorLevel = ProcessId) {
+		Sleep, 2000
+		Goto, ProcessWait
+	}
 }
 
 ReleaseMem() {
