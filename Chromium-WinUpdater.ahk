@@ -1,6 +1,6 @@
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.19.1
-;@Ahk2Exe-SetProductVersion 1.19.1
+;@Ahk2Exe-SetFileVersion 1.20.0
+;@Ahk2Exe-SetProductVersion 1.20.0
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
