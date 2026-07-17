@@ -353,14 +353,7 @@ GetCurrentVersion() {
 	If (!CurrentVersion)
 		Die(_GetVersionError, Path)
 
-	Build := GetCurrentBuild()
-
 	GuiControl,, VerField, %CurrentVersion%
-}
-
-GetCurrentBuild() {
-	RegExMatch(ReleaseApiUrl, "i)/repos/([^/]+)/", User)
-	Return User1
 }
 
 CheckConnection() {
@@ -420,7 +413,20 @@ GetNewVersion() {
 	Progress(_Checking)
 	Task := Browser
 	NewVersion := GetLatestVersion()
+	IniRead, AltReleaseApiUrl, %IniFile%, Alternative, ReleaseApiUrl, 0
+	If (AltReleaseApiUrl) {
+		AltNewVersion := GetLatestVersion(AltReleaseApiUrl)
+		If (VerCompare(AltNewVersion, ">" NewVersion)) {
+			NewVersion := AltNewVersion
+			ReleaseApiUrl := AltReleaseApiUrl
+			IniRead, InstallerFile, %IniFile%, Alternative, InstallerFile, *x64.exe
+			IniRead, PortableFile, %IniFile%, Alternative, PortableFile, *x64.zip
+		}
+	}
 ;MsgBox, ReleaseInfo = %ReleaseInfo%`nCurrentVersion = %CurrentVersion%`nNewVersion = %NewVersion%
+	RegExMatch(ReleaseApiUrl, "i)/repos/([^/]+)/", User)
+	Build := User1
+
 	IniRead, LastUpdateTo, %IniFile%, Log, LastUpdateTo, False
 	If (!VerCompare(NewVersion, ">" CurrentVersion)) {
 		Progress(_NoNewVersion, True)
@@ -772,8 +778,10 @@ Extract(From, To) {
 	Return !(Error <> 0)
 }
 
-GetLatestVersion() {
-	ReleaseUrl := (Task = _Updater ? UpdaterApiUrl : ReleaseApiUrl)
+GetLatestVersion(ReleaseUrl = False) {
+	If (!ReleaseUrl)
+		ReleaseUrl := (Task = _Updater ? UpdaterApiUrl : ReleaseApiUrl)
+;MsgBox, ReleaseUrl: %ReleaseUrl%
 	ReleaseInfo := Download(ReleaseUrl)
 	If (!ReleaseInfo) {
 		If (Task = _Updater)

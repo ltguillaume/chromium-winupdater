@@ -14,6 +14,7 @@ WinUpdater downloads the 64-bit release of [Ungoogled Chromium](https://github.c
 1. Copy/rename `Chromium-WinUpdater.template.ini` to `Chromium-WinUpdater.ini`
 2. Uncomment the 3 lines of the desired alternative build by removing the `;` before  
    `ReleaseApiUrl=`, one `InstallerFile=` and one `PortableFile=`, depending on your Windows architecture (arm64/x64/x86 if available).
+3. Under the INI section `[Alternative]` you set up a second repository. WinUpdater will then check both sources and update to the latest version it finds.
 
 WinUpdater has not been tested with other Chromium releases, but you can try changing the three variables yourself and see if it works, or ask for help by [creating an issue](https://codeberg.org/ltguillaume/chromium-winupdater/issues/).
 There is some additional information about [using Brave](https://codeberg.org/ltguillaume/chromium-winupdater/src/branch/brave).
