@@ -27,11 +27,21 @@ jobs:
           rm ahk.zip
 
       - name: Set up Resource Hacker
+        env:
+          DL_RESHACKER: ${{ vars.DL_RESHACKER }}
         run: |
-          wget -qO rh.zip https://www.angusj.com/resourcehacker/resource_hacker.zip
+          wget -qO rh.zip ${{ env.DL_RESHACKER }}
           unzip rh.zip ResourceHacker.exe
           echo "14a44fe31b04fbcc65e94e80016138a2e9fc9bb6dfcea09b98de57f8a22a1240 ResourceHacker.exe" | sha256sum -c || exit 1
           rm rh.zip
+
+      - name: Download 7za
+        env:
+          DL_7ZA: ${{ vars.DL_7ZA }}
+        run: |
+          wget -qO 7za.zip ${{ env.DL_7ZA }}
+          unzip 7za.zip
+          rm 7za.zip
 
       - name: Build executable
         run: |
