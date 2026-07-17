@@ -154,16 +154,16 @@ Init() {
 	Gui, Font, c669DF6 s22 w700, Segoe UI
 	Gui, Add, Text, x85 y4 BackgroundTrans, %Browser%
 	Gui, Font, cFFFFFF s9 w700
-	Gui, Add, Text, vVerField x86 y42 w222 BackgroundTrans, `n
+	Gui, Add, Text, vVerField x86 y42 w230 BackgroundTrans, `n
 	Gui, Font, w400
-	Gui, Add, Progress, vProgField w217 h20 c669DF6, 10
-	Gui, Add, Text, vLogField w222
+	Gui, Add, Progress, vProgField w225 h20 c669DF6, 10
+	Gui, Add, Text, vLogField w230
 	Gui, Margin,, 15
 	Gui, Show, Hide, %_Updater% %CurrentUpdaterVersion%
 
 	If (SettingTask Or !A_Args.Length()) {	; No arguments: when not running as portable or as a scheduled task
 		If (!IsPortable And FileExist(A_ScriptDir "\" TaskCreateFile) And FileExist(A_ScriptDir "\" TaskRemoveFile)) {	; No scheduled tasks for portable version
-			Gui, Add, CheckBox, vTaskSetField gTaskSet x15 y+10 w290 cBCBCBC Center Check3 -Tabstop, % StrReplace(_SetTask, "{}", A_UserName)
+			Gui, Add, CheckBox, vTaskSetField gTaskSet x15 y+10 w298 cBCBCBC Center Check3 -Tabstop, % StrReplace(_SetTask, "{}", A_UserName)
 			TaskCheck()
 		}
 	}
@@ -552,7 +552,7 @@ RunUpdate() {
 			Install()
 		Else {
 			Progress(_Downloaded)
-			Gui, Add, Button, vUpdateButton gInstall w148 x86 y125 Default, %_StartUpdate%
+			Gui, Add, Button, vUpdateButton gInstall w156 x90 y125 Default, %_StartUpdate%
 			GuiControl, Move, TaskSetField, y161
 			GuiShow(True)	; Wait for user action
 		}
@@ -695,10 +695,10 @@ Die(Error, Var = False, Show = True) {
 	GuiControl, Hide, TaskSetField
 	GuiControl, Hide, UpdateButton
 	Gui, Font, s32
-	Gui, Add, Text, x249 y-2 cYellow, % Chr("0x26A0")
+	Gui, Add, Text, x257 y0 cYellow, % Chr("0x26A0")
 	Gui, Font, s9
 	Msg := Msg " " (ChangesMade ? _ChangesMade : _NoChangesMade) "`n`n" _GoToWebsite
-	Gui, Add, Link, gAction x15 y81 w290 cCCCCCC, %Msg%
+	Gui, Add, Link, gAction x15 y81 w298 cCCCCCC, %Msg%
 
 	Died := Error
 	If (Show)
