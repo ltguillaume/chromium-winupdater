@@ -413,16 +413,6 @@ GetNewVersion() {
 	Progress(_Checking)
 	Task := Browser
 	NewVersion := GetLatestVersion()
-	IniRead, AltReleaseApiUrl, %IniFile%, Alternative, ReleaseApiUrl, 0
-	If (AltReleaseApiUrl) {
-		AltNewVersion := GetLatestVersion(AltReleaseApiUrl)
-		If (VerCompare(AltNewVersion, ">" NewVersion)) {
-			NewVersion := AltNewVersion
-			ReleaseApiUrl := AltReleaseApiUrl
-			IniRead, InstallerFile, %IniFile%, Alternative, InstallerFile, *x64.exe
-			IniRead, PortableFile, %IniFile%, Alternative, PortableFile, *x64.zip
-		}
-	}
 ;MsgBox, ReleaseInfo = %ReleaseInfo%`nCurrentVersion = %CurrentVersion%`nNewVersion = %NewVersion%
 	RegExMatch(ReleaseApiUrl, "i)/repos/([^/]+)/", User)
 	Build := User1
@@ -778,9 +768,8 @@ Extract(From, To) {
 	Return !(Error <> 0)
 }
 
-GetLatestVersion(ReleaseUrl = False) {
-	If (!ReleaseUrl)
-		ReleaseUrl := (Task = _Updater ? UpdaterApiUrl : ReleaseApiUrl)
+GetLatestVersion() {
+	ReleaseUrl := (Task = _Updater ? UpdaterApiUrl : ReleaseApiUrl)
 ;MsgBox, ReleaseUrl: %ReleaseUrl%
 	ReleaseInfo := Download(ReleaseUrl)
 	If (!ReleaseInfo) {
@@ -790,14 +779,39 @@ GetLatestVersion(ReleaseUrl = False) {
 			Die(_DownloadJsonError)
 	}
 
+	Version := ExtractVersion(ReleaseInfo)
+	If (Task = _Updater)
+		Return Version
+
+	IniRead, AltReleaseApiUrl, %IniFile%, Alternative, ReleaseApiUrl, 0
+;MsgBox, %AltReleaseApiUrl%
+	If (AltReleaseApiUrl) {
+		AltReleaseInfo := Download(AltReleaseApiUrl)
+		If (!AltReleaseInfo)
+			Die(_DownloadJsonError +" (Alt)")
+		AltVersion := ExtractVersion(AltReleaseInfo)
+		If (VerCompare(AltVersion, ">" Version)) {
+			Version := AltVersion
+			ReleaseApiUrl := AltReleaseApiUrl
+			ReleaseInfo := AltReleaseInfo
+			IniRead, InstallerFile, %IniFile%, Alternative, InstallerFile, *x64.exe
+			IniRead, PortableFile, %IniFile%, Alternative, PortableFile, *x64.zip
+		}
+	}
+
+	Return Version
+}
+
+ExtractVersion(NewReleaseInfo) {
+;MsgBox, %NewReleaseInfo%
 	ReleaseExp := (Task = _Updater ? "i)tag_name"":\s*""(.+?)""" : "i)""tag_name"":\s*"".*?v?([\d\.]+)(-M([\d\.]+))?.*?""")
-	RegExMatch(ReleaseInfo, ReleaseExp, Release)
-	LatestVersion := (Release3 ? Release3 : Release1)
-;MsgBox, %LatestVersion%
-	If (!LatestVersion) {
-		If (Task = _Updater And InStr(ReleaseInfo, "{") <> 1)	; Codeberg non-JSON error page
+	RegExMatch(NewReleaseInfo, ReleaseExp, Release)
+	Version := (Release3 ? Release3 : Release1)
+;MsgBox, %Version%
+	If (!Version) {
+		If (Task = _Updater And InStr(NewReleaseInfo, "{") <> 1)	; Codeberg non-JSON error page
 			Return CurrentUpdaterVersion
-		Else If (InStr(ReleaseInfo, "API rate limit exceeded")) {	; GitHub API rate limit
+		Else If (InStr(NewReleaseInfo, "API rate limit exceeded")) {	; GitHub API rate limit
 			If (!Scheduled)
 				Die(_ApiRateLimit)
 			Else {
@@ -807,8 +821,8 @@ GetLatestVersion(ReleaseUrl = False) {
 		} Else
 			Die(_JsonVersionError)
 	}
-
-	Return LatestVersion
+	
+	Return Version
 }
 
 GuiClose() {
