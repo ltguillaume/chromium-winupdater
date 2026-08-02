@@ -1,6 +1,6 @@
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.20.0
-;@Ahk2Exe-SetProductVersion 1.20.0
+;@Ahk2Exe-SetFileVersion 1.20.1
+;@Ahk2Exe-SetProductVersion 1.20.1
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -558,8 +558,8 @@ RunUpdate() {
 			Install()
 		Else {
 			Progress(_Downloaded)
-			Gui, Add, Button, vUpdateButton gInstall w156 x90 y125 Default, %_StartUpdate%
 			GuiControl, Move, TaskSetField, y161
+			Gui, Add, Button, vUpdateButton gInstall w156 x90 y125 Default, %_StartUpdate%
 			GuiShow(True)	; Wait for user action
 		}
 	}
