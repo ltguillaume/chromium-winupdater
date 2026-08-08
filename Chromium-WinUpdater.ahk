@@ -41,6 +41,7 @@ GetSettings()
 
 ; Strings
 Global _Updater       := Browser " WinUpdater"
+, _Title              := _Updater " {}"
 , _Show               := "Show"
 , _UpdaterHelp        := "WinUpdater Help"
 , _Settings           := "Settings"
@@ -129,6 +130,7 @@ GetSettings() {
 Init() {
 	FileGetVersion, CurrentUpdaterVersion, %A_ScriptFullPath%
 	CurrentUpdaterVersion := RegExReplace(CurrentUpdaterVersion, "(\.0)+$")
+	_Title := StrReplace(_Title, "{}", CurrentUpdaterVersion)
 	EnvGet, ProgramW6432, ProgramW6432
 	If (ProgramW6432 = "")
 		ProgramW6432 := "?"
@@ -139,7 +141,7 @@ Init() {
 		IsPortable := True
 	IniWrite, %IgnoreCrlErrors%, %IniFile%, Settings, IgnoreCrlErrors
 	IniWrite, %UpdateSelf%, %IniFile%, Settings, UpdateSelf
-	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%
+	Menu, Tray, Tip, %_Title%
 	Menu, Tray, NoStandard
 	Menu, Tray, Add, %_Show%, Action
 	Menu, Tray, Add, %_UpdaterHelp%, Action
@@ -159,7 +161,7 @@ Init() {
 	Gui, Add, Progress, vProgField w225 h20 c669DF6, 10
 	Gui, Add, Text, vLogField w230
 	Gui, Margin,, 15
-	Gui, Show, Hide, %_Updater% %CurrentUpdaterVersion%
+	Gui, Show, Hide, %_Title%
 
 	If (SettingTask Or !A_Args.Length()) {	; No arguments: when not running as portable or as a scheduled task
 		If (!IsPortable And FileExist(A_ScriptDir "\" TaskCreateFile) And FileExist(A_ScriptDir "\" TaskRemoveFile)) {	; No scheduled tasks for portable version
@@ -250,7 +252,7 @@ CheckPaths() {
 
 ;MsgBox, Path = %Path%`nSetupParams = %SetupParams%
 	Folder := StrReplace(Path, "\" BrowserExe)
-	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%`n%Folder%
+	Menu, Tray, Tip, %_Title%`n%Folder%
 
 	If (SubStr(WorkDir, 1, 1) = ".")
 		WorkDir := A_ScriptDir . SubStr(WorkDir, 2)
@@ -957,7 +959,7 @@ Log(Key, Msg = "", PrefixTime = False) {
 Notify(Msg, Ver = 0, Delay = 0) {
 	If (!Ver)
 		Ver := NewVersion
-	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%`n%Folder%`n`n%Msg%
+	Menu, Tray, Tip, %_Title%`n%Folder%`n`n%Msg%
 	If (Scheduled Or Delay) {
 		TrayTip, %Msg%, v%Ver%,, 16
 		Sleep, %Delay%
@@ -971,7 +973,7 @@ Progress(Msg, End = False) {
 	Else If (Msg <> _NewVersionFound)
 		GuiControl,, ProgField, +15
 
-	Menu, Tray, Tip, %_Updater% %CurrentUpdaterVersion%`n%Folder%`n`n%Msg%
+	Menu, Tray, Tip, %_Title%`n%Folder%`n`n%Msg%
 	Done := End
 }
 
