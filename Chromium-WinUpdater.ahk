@@ -1,6 +1,6 @@
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.20.1
-;@Ahk2Exe-SetProductVersion 1.20.1
+;@Ahk2Exe-SetFileVersion 1.21.0
+;@Ahk2Exe-SetProductVersion 1.21.0
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -823,7 +823,7 @@ ExtractVersion(NewReleaseInfo) {
 		} Else
 			Die(_JsonVersionError)
 	}
-	
+
 	Return Version
 }
 
@@ -986,25 +986,31 @@ TaskCheck() {
 TaskSet() {
 	If (SettingTask) {
 		Progress(_SettingTask)
-		If (A_Args[1] = "/CreateTask")
-			TaskSetField := 0
-		Else If (A_Args[1] = "/RemoveTask")
-			TaskSetField := 1
-		Sleep, 1000
-	}
+		Goal := A_Args[1] = "/CreateTask" ? 1 : 0
+		If (Goal = 0 And TaskSetField = 0)
+			Return Exit()
+		Sleep, 1500
+	} Else
+		Goal := !TaskSetField
 
-	Script := A_ScriptDir "\" (TaskSetField = 0 ? TaskCreateFile : TaskRemoveFile)
+	Script := A_ScriptDir "\" (Goal = 1 ? TaskCreateFile : TaskRemoveFile)
+	If (!FileExist(Script))
+		Die(_NoTaskScript, Script)
 	GuiControl,, TaskSetField, -1
 	RunWait, powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File "%Script%"
 	WinWaitActive, ahk_id %GuiHwnd%
-	Sleep, 1000
+	Sleep, 500
 	WinWaitActive
 	TaskCheck()
 
 	If (SettingTask) {
 		SettingTask := 0
-		Progress(_SettingTask _Done, True)
-		GuiShow(True)	; Don't start updating, just wait for close
+		Result := TaskSetField = Goal ? _Done : _Failed
+		Progress(_SettingTask Result, True)
+		If (Result = _Done)
+			Exit()
+		Else
+			GuiShow(True)	; Don't start updating, just wait for close
 	}
 }
 
