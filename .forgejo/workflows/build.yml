@@ -14,7 +14,7 @@ jobs:
       - name: Set up dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y nodejs zip
+          sudo apt-get install -y nodejs zip 7zip
 
       - name: Check out repository
         uses: actions/checkout@v6
@@ -40,14 +40,11 @@ jobs:
           rm rh.zip
 
       - name: Download 7za
-        env:
-          DL_7ZA: ${{ vars.DL_7ZA }}
-          SHA_7ZA: ${{ vars.SHA_7ZA }}
         run: |
-          wget -qO 7za.zip ${{ env.DL_7ZA }}
-          echo "${{ env.SHA_7ZA }} 7za.zip" | sha256sum -c || exit 1
-          unzip 7za.zip
-          rm 7za.zip
+          wget -qO 7z.json https://api.github.com/repos/ip7z/7zip/releases/latest
+          grep -Eo "https://github.com/ip7z/7zip/releases/download/[0-9\.]+/7z[0-9]+-extra.7z" 7z.json | wget -qO 7za.7z -i -
+          7z e 7za.7z 7za.exe
+          rm 7za.7z
 
       - name: Build executable
         run: |
