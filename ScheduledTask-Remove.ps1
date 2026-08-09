@@ -1,9 +1,10 @@
-Write-Output "Removing scheduled task for Chromium WinUpdater..."
-$Title = "Chromium WinUpdater"
-$Host.UI.RawUI.WindowTitle = $Title
+$Updater = "Chromium WinUpdater"
+$Host.UI.RawUI.WindowTitle = "PowerShell: Remove $Updater scheduled task"
+
 If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
 {
-  Write-Output "Requesting administrator privileges"
+  Write-Output "`nTo remove the task, please allow PowerShell to make changes to your device.`n`nPress any key to continue..."
+  [Console]::ReadKey()
   $UserName = [Environment]::UserName
   $Script = $MyInvocation.MyCommand.Path
   Start-Process powershell.exe -Verb RunAs "-ExecutionPolicy RemoteSigned -File `"$PSCommandPath`" `"${UserName}`""
@@ -12,6 +13,8 @@ If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 
 $UserName = If ($Args[0]) {$Args[0]} Else {[Environment]::UserName}
 
-Unregister-ScheduledTask -TaskName "$Title ($UserName)" -Confirm:$False
-Write-Output "Done. Press any key to close this window."
+Unregister-ScheduledTask -TaskName "$Updater ($UserName)" -Confirm:$False
+
+If ($?) { Write-Output "`nTask removed." }
+Write-Output "`nPress any key to continue..."
 [Console]::ReadKey()
