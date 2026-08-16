@@ -55,8 +55,9 @@ Global _Updater       := Browser " WinUpdater"
 , _SetTask            := "Schedule a task for automatic update checks while`nuser {} is logged on."
 , _SettingTask        := (A_Args[1] = "/CreateTask" ? "Creating" : "Removing") " scheduled task..."
 , _Done               := " Done."
+, _Failed             := " Failed."
 , _GetPathError       := "Could not find the browser path.`nBrowse to {} in the following dialog."
-, _SelectFileTitle    := _Updater " - Select " BrowserExe "..."
+, _SelectFileTitle    := _Title " - Select " BrowserExe "..."
 , _WritePermError     := "Could not write to {}. Please check the current user account's write permissions for this folder."
 , _CopyError          := "Could not copy {}"
 , _GetBuildError      := "Could not determine the build type of " Browser "."
@@ -211,7 +212,7 @@ Action(ItemName, GuiEvent, LinkIndex) {
 				RegRead, DefBrowser, HKCR, %DefBrowser%\Shell\Open\Command
 				Run, % StrReplace(DefBrowser, "%1", Url)
 				If (ErrorLevel)
-					MsgBox, 48, %_Updater%, %_NoDefaultBrowser%
+					MsgBox, 48, %_Title%, %_NoDefaultBrowser%
 			}
 	}
 }
@@ -272,8 +273,8 @@ CheckPaths() {
 	}
 
 	If (!FileExist(Path)) {
-		MsgBox, 48, %_Updater%, % StrReplace(_GetPathError, "{}", BrowserExe)
-		FileSelectFile, Path, 3, %A_ScriptDir%, %_SelectFileTitle%, %BrowserExe%
+		MsgBox, 48, %_Title%, % StrReplace(_GetPathError, "{}", BrowserExe)
+		FileSelectFile, Path, 3, %Path%, %_SelectFileTitle%, %BrowserExe%
 		If (ErrorLevel)
 			ExitApp
 		Else {
@@ -650,6 +651,7 @@ Exit(Restart = False) {
 
 ; Clean up
 	Log("LastRun",, True)
+	SetWorkingDir, %WorkDir%
 	If (SetupFile And (Died = _DownloadSetupError Or Died = _ChecksumMatchError Or Died = _ExtractionError Or Done)) {
 		Sleep, 2000
 		FileDelete, %SetupFile%
@@ -729,7 +731,7 @@ CrlCheck() {
 	If (WinExist("ahk_exe " UpdaterFile " ahk_class #32770",, Browser)) {
 		If (!IgnoreCrlErrors) {
 			Msg := StrReplace(_CrlError, "{}", CurrentDomain)
-			MsgBox, 52, %_Updater%, %Msg%
+			MsgBox, 52, %_Title%, %Msg%
 			IfMsgBox, No
 			{
 				ControlClick, Button2	; Abort
@@ -981,6 +983,7 @@ TaskCheck() {
 	RunWait schtasks.exe /query /tn "%_Updater% (%A_UserName%)",, Hide
 	GuiControl,, TaskSetField, % ErrorLevel = 0
 	Gui, Submit, NoHide
+	Return Result
 }
 
 TaskSet() {
