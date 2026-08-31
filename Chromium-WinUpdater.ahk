@@ -562,17 +562,26 @@ ExtractPortable() {
 	If (!Extract(WorkDir "\" SetupFile, ExtractDir))
 		Die(_ExtractionError)
 
-	SetWorkingDir, %ExtractDir%
-	If (!FileExist("chrome.exe")) {
-		Loop, Files, *, D
-		{
-			If (FileExist(A_LoopFilePath "\" BrowserExe)) {
-				SetWorkingDir, %A_LoopFilePath%
-				Break
-			}
+	Loop, Files, %ExtractDir%\*, D
+	{
+		If (FileExist(A_LoopFilePath "\" BrowserExe)) {
+			SetupExtracted := A_LoopFilePath
+			Break
 		}
 	}
 
+	; Move files not present in the new version to a backup folder (ignores WidevineCdm)
+	SetWorkingDir, %Folder%
+	Loop, Files, *, R
+	{
+		If (!FileExist(SetupExtracted "\" A_LoopFilePath) And A_LoopFileName <> BrowserExe ".wubak" And !InStr(A_LoopFileDir, "WidevineCdm")) {
+			FileCreateDir, %Folder%.wubak\%A_LoopFileDir%
+			FileMove, %A_LoopFilePath%, %Folder%.wubak\%A_LoopFilePath%, 1
+		}
+	}
+
+;MsgBox, Traversing %A_LoopFilePath%
+	SetWorkingDir, %SetupExtracted%
 	Loop, Files, *, R
 	{
 		If (A_LoopFileName = BrowserExe Or A_LoopFileName = UpdaterFile)
