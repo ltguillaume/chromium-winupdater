@@ -37,7 +37,7 @@ Global Args       := ""
 , IniFile, LocalAppData, Path, Folder, ProgramW6432, WorkDir, ExtractDir, Build, IgnoreCrlErrors, UpdateSelf, Task, CurrentDomain, CurrentUpdaterVersion, ReleaseApiUrl
 , InstallerFile, PortableFile, ReleaseInfo, BaseVersion, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton, ShutdownBlocked, Died
 
-GetSettings()
+CheckSettings()
 
 ; Strings
 Global _Updater       := Browser " WinUpdater"
@@ -46,11 +46,11 @@ Global _Updater       := Browser " WinUpdater"
 , _UpdaterHelp        := "WinUpdater Help"
 , _Settings           := "Settings"
 , _Exit               := "Exit"
-, _NoConnectionError  := "Could not connect to " SubStr(ConnectCheckUrl, 1, InStr(ConnectCheckUrl, "/",,, 3) - 1) "."
 , _IsRunningError     := _Updater " is already running."
 , _IsElevated         := "To set up scheduled tasks properly, please do not run WinUpdater as administrator."
 , _NoDefaultBrowser   := "Could not open your default browser."
 , _SelfUpdating       := "Downloading new WinUpdater version..."
+, _NoConnectionError  := "Could not connect to " SubStr(ConnectCheckUrl, 1, InStr(ConnectCheckUrl, "/",,, 3) - 1) "."
 , _Checking           := "Checking for new version..."
 , _SetTask            := "Schedule a task for automatic update checks while`nuser {} is logged on."
 , _SettingTask        := (A_Args[1] = "/CreateTask" ? "Creating" : "Removing") " scheduled task..."
@@ -104,14 +104,13 @@ If (SettingTask Or !A_Args.Length())	; No arguments: when not running as portabl
 	GuiShow()
 If (SettingTask)
 	TaskSet()
-CheckConnection()
 If (UpdateSelf And A_IsCompiled)
 	SelfUpdate()
 If (GetNewVersion())
 	GetUpdate()
 Exit()
 
-GetSettings() {
+CheckSettings() {
 	SplitPath, A_ScriptFullPath,,,, BaseName
 	IniFile := A_ScriptDir "\" BaseName ".ini"
 	IniRead, IgnoreCrlErrors, %IniFile%, Settings, IgnoreCrlErrors, 0
@@ -120,6 +119,8 @@ GetSettings() {
 	IniRead, InstallerFile, %IniFile%, Settings, InstallerFile, *x64.exe
 	IniRead, PortableFile, %IniFile%, Settings, PortableFile, *x64.zip
 	IniRead, ReleaseApiUrl, %IniFile%, Settings, ReleaseApiUrl, https://api.github.com/repos/ungoogled-software/ungoogled-chromium-windows/releases/latest	; Defaults to Ungoogled Chromium
+	IniWrite, %IgnoreCrlErrors%, %IniFile%, Settings, IgnoreCrlErrors
+	IniWrite, %UpdateSelf%, %IniFile%, Settings, UpdateSelf
 	If (InStr(ReleaseApiUrl, "brave")) {
 		Browser         := "Brave"
 		BrowserExe      := "brave.exe"
@@ -141,8 +142,6 @@ Init() {
 		LocalAppData := "?"
 	If (InstallerFile = "NONE")
 		IsPortable := True
-	IniWrite, %IgnoreCrlErrors%, %IniFile%, Settings, IgnoreCrlErrors
-	IniWrite, %UpdateSelf%, %IniFile%, Settings, UpdateSelf
 	Menu, Tray, Tip, %_Title%
 	Menu, Tray, NoStandard
 	Menu, Tray, Add, %_Show%, Action
@@ -358,17 +357,6 @@ GetCurrentVersion() {
 		Die(_GetVersionError, Path)
 
 	GuiControl,, VerField, %CurrentVersion%
-}
-
-CheckConnection() {
-	Connected := Download(ConnectCheckUrl)
-;MsgBox, %Connected%
-	If (!Connected Or !InStr(Connected, "githubassets")) {
-		RegExMatch(Connected, "i)<title>(.+?)</title>", Title)
-		Title := Title1 ? "`n" Title1 "." : ""
-;MsgBox, %Title%
-		Die(_NoConnectionError Title,, !Scheduled)	; Show only if not scheduled
-	}
 }
 
 SelfUpdate() {
@@ -775,12 +763,11 @@ Extract(From, To) {
 
 GetLatestVersion() {
 	ReleaseUrl := (Task = _Updater ? UpdaterApiUrl : ReleaseApiUrl)
-;MsgBox, ReleaseUrl: %ReleaseUrl%
 	ReleaseInfo := Download(ReleaseUrl)
-	If (!ReleaseInfo) {
+	If (!ReleaseInfo Or InStr(ReleaseInfo, "{") <> 1) {	; If payload is not JSON (e.g. error page)) {
 		If (Task = _Updater)
 			Return CurrentUpdaterVersion
-		Else
+		Else If (CheckConnection())
 			Die(_DownloadJsonError)
 	}
 
@@ -811,9 +798,9 @@ ExtractVersion(NewReleaseInfo) {
 ;MsgBox, %NewReleaseInfo%
 	ReleaseExp := (Task = _Updater ? "i)tag_name"":\s*""(.+?)""" : "i)""tag_name"":\s*"".*?v?([\d\.]+)(-M([\d\.]+))?.*?""")
 	RegExMatch(NewReleaseInfo, ReleaseExp, Release)
-	Version := (Release3 ? Release3 : Release1)
+	LatestVersion := (Release3 ? Release3 : Release1)
 ;MsgBox, %Version%
-	If (!Version) {
+	If (!LatestVersion) {
 		If (Task = _Updater And InStr(NewReleaseInfo, "{") <> 1)	; Codeberg non-JSON error page
 			Return CurrentUpdaterVersion
 		Else If (InStr(NewReleaseInfo, "API rate limit exceeded")) {	; GitHub API rate limit
@@ -827,7 +814,19 @@ ExtractVersion(NewReleaseInfo) {
 			Die(_JsonVersionError)
 	}
 
-	Return Version
+	Return LatestVersion
+}
+
+CheckConnection() {
+	Connected := Download(ConnectCheckUrl)
+;MsgBox, %Connected%
+	If (!Connected Or !InStr(Connected, """version"":")) {
+		RegExMatch(Connected, "i)<title>(.+?)</title>", Title)
+		Title := Title1 ? "`n" Title1 "." : ""
+;MsgBox, %Title%
+		Die(_NoConnectionError Title,, !Scheduled)	; Show only if not scheduled
+	}
+	Return True
 }
 
 GuiClose() {
