@@ -4,7 +4,7 @@
 # Chromium WinUpdater
 by ltGuillaume: [Codeberg](https://codeberg.org/ltguillaume) | [GitHub](https://github.com/ltguillaume) | [Buy me a beer](https://coff.ee/ltguillaume) 🍺
 
-An attempt to make updating Chromium for Windows much easier. This is a fork of [LibreWolf WinUpdater](https://codeberg.org/ltguillaume/librewolf-winupdater).
+An attempt to make updating Chromium for Windows much easier. This is a fork of my [LibreWolf WinUpdater](https://librewolf.dev/librewolf/winupdater).
 
 ![Chromium WinUpdater](SCREENSHOT.png)
 
