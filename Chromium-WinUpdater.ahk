@@ -428,6 +428,7 @@ GetUpdate() {
 
 	Download:
 	DownloadUpdate()
+	Verify(SetupFile)
 	Waited := BrowserWaitClose()
 
 	If (Waited) {
