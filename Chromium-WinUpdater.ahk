@@ -375,9 +375,12 @@ SelfUpdate() {
 ;MsgBox, %DownloadInfo1%`n%DownloadInfo2%
 	SelfUpdateZip := DownloadInfo1
 	DownloadUrl := DownloadInfo2
-	UrlDownloadToFile, %DownloadUrl%, %SelfUpdateZip%
+	Try UrlDownloadToFile, %DownloadUrl%, %SelfUpdateZip%
+	Catch e {
+		ErrorLevel := e.What " (" e.Line "): " e.Message (e.Extra ? " [" e.Extra "]" : "") "."
+	}
 	If (ErrorLevel Or !FileExist(SelfUpdateZip))
-		Return Log("SelfUpdate", _DownloadSelfError, True)
+		Return Log("SelfUpdate", _DownloadSelfError " " ErrorLevel, True)
 ;MsgBox, Extracting %SelfUpdateZip%
 	Verify(SelfUpdateZip)
 
@@ -460,9 +463,12 @@ DownloadUpdate() {
 
 	; Download setup file
 	Progress(_Downloading)
-	UrlDownloadToFile, %DownloadUrl%, %SetupFile%
+	Try UrlDownloadToFile, %DownloadUrl%, %SetupFile%
+	Catch e {
+		ErrorLevel := e.What " (" e.Line "): " e.Message (e.Extra ? " [" e.Extra "]" : "") "."
+	}
 	If (ErrorLevel Or !FileExist(SetupFile))
-		Die(_DownloadSetupError)
+		Die(_DownloadSetupError " " ErrorLevel)
 }
 
 BrowserWaitClose() {
@@ -830,9 +836,7 @@ CheckConnection() {
 }
 
 GuiClose() {
-	try {
-		Gui, Destroy
-	} catch {}
+	Try Gui, Destroy
 	Exit()
 }
 
@@ -1019,9 +1023,7 @@ TaskSet() {
 
 RunElevated() {
 ;MsgBox, Running elevated (args = "%Args%")
-	Try {
-		Run *RunAs "%A_ScriptFullPath%" %Args% /Restart
-	}
+	Try Run *RunAs "%A_ScriptFullPath%" %Args% /Restart
 	ExitApp
 }
 
