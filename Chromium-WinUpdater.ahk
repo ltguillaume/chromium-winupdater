@@ -1,6 +1,6 @@
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.21.0
-;@Ahk2Exe-SetProductVersion 1.21.0
+;@Ahk2Exe-SetFileVersion 1.21.1
+;@Ahk2Exe-SetProductVersion 1.21.1
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -570,6 +570,9 @@ ExtractPortable() {
 		}
 	}
 
+	; Remove old manifest
+	FileDelete, %PortableDir%\%CurrentVersion%.manifest
+
 	; Move files not present in the new version to a backup folder (ignores WidevineCdm)
 	SetWorkingDir, %Folder%
 	Loop, Files, *, R
@@ -605,7 +608,6 @@ ExtractPortable() {
 
 	If (Browser = "Brave")
 		FileRemoveDir, % PortableDir "\" BaseVersion CurrentVersion, 1
-	FileDelete, %PortableDir%\%CurrentVersion%.manifest
 
 	SetWorkingDir, %WorkDir%
 	WriteReport()
