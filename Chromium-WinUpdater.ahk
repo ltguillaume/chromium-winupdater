@@ -1,6 +1,6 @@
 ; Chromium WinUpdater - https://codeberg.org/ltguillaume/chromium-winupdater
-;@Ahk2Exe-SetFileVersion 1.22.0
-;@Ahk2Exe-SetProductVersion 1.22.0
+;@Ahk2Exe-SetFileVersion 1.23.0
+;@Ahk2Exe-SetProductVersion 1.23.0
 
 ;@Ahk2Exe-Base Unicode 32*
 ;@Ahk2Exe-SetCopyright ltguillaume
@@ -34,7 +34,7 @@ Global Args       := ""
 , SettingTask     := A_Args[1] = "/CreateTask" Or A_Args[1] = "/RemoveTask"
 , ChangesMade     := False
 , Done            := False
-, IniFile, LocalAppData, Path, Folder, ProgramW6432, WorkDir, ExtractDir, Build, IgnoreCrlErrors, UpdateSelf, Task, CurrentDomain, CurrentUpdaterVersion, ReleaseApiUrl
+, IniFile, LocalAppData, Path, Folder, ProgramW6432, WorkDir, ExtractDir, Build, IgnoreCrlErrors, UpdateSelf, Task, CurrentDomain, CurrentUpdaterVersion, ReleaseApiUrl, Signature
 , InstallerFile, PortableFile, ReleaseInfo, BaseVersion, CurrentVersion, NewVersion, SetupFile, GuiHwnd, LogField, ProgField, VerField, TaskSetField, UpdateButton, Reinstalling, ShutdownBlocked, Died
 
 CheckSettings()
@@ -76,6 +76,8 @@ Global _Updater       := Browser " WinUpdater"
 , _FindSumsUrlError   := "Could not find the URL to the checksum file."
 , _FindChecksumError  := "Could not find the checksum for the downloaded file."
 , _ChecksumMatchError := "The file checksum for {} did not match, so it's possible the download failed."
+, _SignatureError     := "Could not verify that {} was correctly signed.`n`n1. Only click Yes to continue if this warning was expected.`n2. Make sure PowerShell has internet access to check the certificate. If so, the file may have been tampered with.`n3. Click No and try again by restarting WinUpdater.`n4. Check for known issues on the project website."
+, _SignatureErrorExit := "Signature verification for {} has failed."
 , _ChangesMade        := "However, new files were written to the target folder!"
 , _NoChangesMade      := "No changes were made to your " Browser " folder."
 , _Extracting         := "Extracting portable version..."
@@ -114,12 +116,15 @@ CheckSettings() {
 	SplitPath, A_ScriptFullPath,,,, BaseName
 	IniFile := A_ScriptDir "\" BaseName ".ini"
 	IniRead, IgnoreCrlErrors, %IniFile%, Settings, IgnoreCrlErrors, 0
+	IniRead, NoSigChecks, %IniFile%, Settings, NoSigChecks, 0	; Using "False" in .ini causes If (NoSigChecks) to be True
 	IniRead, UpdateSelf, %IniFile%, Settings, UpdateSelf, 1	; Using "False" in .ini causes If (UpdateSelf) to be True
 	IniRead, WorkDir, %IniFile%, Settings, WorkDir, %A_Temp%
 	IniRead, InstallerFile, %IniFile%, Settings, InstallerFile, *x64.exe
 	IniRead, PortableFile, %IniFile%, Settings, PortableFile, *x64.zip
 	IniRead, ReleaseApiUrl, %IniFile%, Settings, ReleaseApiUrl, https://api.github.com/repos/ungoogled-software/ungoogled-chromium-windows/releases/latest	; Defaults to Ungoogled Chromium
+	IniRead, Signature, %IniFile%, Settings, Signature, 0
 	IniWrite, %IgnoreCrlErrors%, %IniFile%, Settings, IgnoreCrlErrors
+	IniWrite, %NoSigChecks%, %IniFile%, Settings, NoSigChecks
 	IniWrite, %UpdateSelf%, %IniFile%, Settings, UpdateSelf
 	If (InStr(ReleaseApiUrl, "brave")) {
 		Browser         := "Brave"
@@ -376,9 +381,8 @@ SelfUpdate() {
 	SelfUpdateZip := DownloadInfo1
 	DownloadUrl := DownloadInfo2
 	Try UrlDownloadToFile, %DownloadUrl%, %SelfUpdateZip%
-	Catch e {
-		ErrorLevel := e.What " (" e.Line "): " e.Message (e.Extra ? " [" e.Extra "]" : "") "."
-	}
+	Catch e
+		ErrorLevel := e.What ": " e.Message (e.Extra ? " [" e.Extra "]" : "") "."
 	If (ErrorLevel Or !FileExist(SelfUpdateZip))
 		Return Log("SelfUpdate", _DownloadSelfError " " ErrorLevel, True)
 ;MsgBox, Extracting %SelfUpdateZip%
@@ -443,7 +447,7 @@ GetUpdate() {
 			FileDelete, %SetupFile%
 			Goto, Download
 		} Else
-			Verify(SetupFile)	; Verify hash to make sure the setup file hasn't been tampered with since download
+			Verify(SetupFile, False)	; Verify hash (no signature) to make sure the setup file hasn't been tampered with since download
 	}
 
 	RunUpdate()
@@ -472,9 +476,8 @@ DownloadUpdate() {
 	; Download setup file
 	Progress(_Downloading)
 	Try UrlDownloadToFile, %DownloadUrl%, %SetupFile%
-	Catch e {
-		ErrorLevel := e.What " (" e.Line "): " e.Message (e.Extra ? " [" e.Extra "]" : "") "."
-	}
+	Catch e
+		RunWait, curl.exe -LA WinUpdater -o "%SetupFile%" "%DownloadUrl%",, Hide UseErrorLevel
 	If (ErrorLevel Or !FileExist(SetupFile))
 		Die(_DownloadSetupError " " ErrorLevel)
 }
@@ -511,7 +514,7 @@ ReleaseMem() {
 	DllCall("CloseHandle", "Int", Proc)
 }
 
-Verify(File) {
+Verify(File, Signature = True) {
 	If (Task <> _Updater) {
 		If (InStr(ReleaseApiUrl, "api.github.com"))
 			Goto, GitHub
@@ -543,6 +546,30 @@ Verify(File) {
 		Progress(_CheckingHash)
 	If (Checksum1 <> Hash(File))
 		Die(_ChecksumMatchError, File)
+
+	If (Signature And SubStr(File, -3) = ".exe")
+		CheckSignature(File)
+}
+
+CheckSignature(File) {
+;MsgBox, %File%
+	If (NoSigChecks Or !Signature Or ShutdownBlocked)	; During a blocked shutdown, the signature checks will always fail
+		Return
+	; Check if the file is correctly signed by the the right signer
+	Cmd = $sig = Get-AuthenticodeSignature """%File%""" | Where-Object { $_.Status -eq """Valid""" -and $_.SignerCertificate.Subject -like """*%Signature%*""" } `; exit -not $sig
+	RunWait, powershell.exe -NoProfile -Command %Cmd%,, Hide
+;MsgBox, Signature for:`n%File%`nWrong signature = %ErrorLevel%
+	If (ErrorLevel) {
+		If (Focus()) {
+			MsgBox, 276, %_Title%, % StrReplace(_SignatureError, "{}", File)
+			IfMsgBox, Yes
+				Return
+		}
+		If (File = A_ScriptDir "\" UpdaterFile)
+			FileDelete, %File%
+		Die(_SignatureErrorExit, File)
+	}
+;	Else MsgBox, Signature for %File% OK.
 }
 
 RunUpdate() {
@@ -569,6 +596,7 @@ ExtractPortable() {
 	If (!Extract(WorkDir "\" SetupFile, ExtractDir))
 		Die(_ExtractionError)
 
+	SetupExtracted := ExtractDir
 	Loop, Files, %ExtractDir%\*, D
 	{
 		If (FileExist(A_LoopFilePath "\" BrowserExe)) {
@@ -576,6 +604,8 @@ ExtractPortable() {
 			Break
 		}
 	}
+
+	CheckSignature(SetupExtracted "\" BrowserExe)
 
 	; Remove old manifest
 	FileDelete, %PortableDir%\%CurrentVersion%.manifest
@@ -666,7 +696,7 @@ Exit(Restart = False) {
 ; Clean up
 	Log("LastRun",, True)
 	SetWorkingDir, %WorkDir%
-	If (SetupFile And (Died = _DownloadSetupError Or Died = _ChecksumMatchError Or Died = _ExtractionError Or Done)) {
+	If (SetupFile And (Died = _DownloadSetupError Or Died = _ChecksumMatchError Or Died = _SignatureErrorExit Or Died = _ExtractionError Or Done)) {
 		Sleep, 2000
 		FileDelete, %SetupFile%
 	}
@@ -813,6 +843,7 @@ GetLatestVersion() {
 			ReleaseInfo := AltReleaseInfo
 			IniRead, InstallerFile, %IniFile%, Alternative, InstallerFile, *x64.exe
 			IniRead, PortableFile, %IniFile%, Alternative, PortableFile, *x64.zip
+			IniRead, Signature, %IniFile%, Alternative, Signature, 0
 		}
 	}
 

@@ -51,6 +51,12 @@ To specify the directory of `Chromium-WinUpdater.exe`, type `WorkDir=.`, or use 
 If you set up scheduled updates, you might get annoyed by some anti-cheat software. It may wrongfully point at WinUpdater, because it is built upon AutoHotkey, which _can_ be used to cheat in games. If this happens, you can either:
   1. Open the __Task Scheduler__ via the Start menu, then double-click on `Chromium WinUpdater...` in the `Task Scheduler Library`, open the `Triggers` tab, then click on `One time` and the button `Delete`. Then press `OK` to make the change to _only check for updates 1 minute after login_ (and not every 4 hours). This will still cause issues if you leave games opened when locking your user account, though.
   2. Create a shortcut to `Chromium-Winupdater.exe /RemoveTask` and one to `Chromium-Winupdater.exe /CreateTask` (on your desktop), so you can quickly prevent WinUpdater from running during gameplay and reactivate it afterwards. Just put them next to the shortcuts of your game launchers and you won't forget.
+### Signature verification
+WinUpdater will validate the setup file (or the browser executable when downloading a portable version) via the signing certificate if there is a `Signature` value for the release in the `.ini` file. For this, PowerShell is used in the background. You may get the warning `Could not verify that (...) was correctly signed` or the error `Signature verification has failed` if you have blocked internet access for PowerShell (e.g. `%WinDir%\SysWOW64\WindowsPowerShell\v1.0\powershell.exe`). For signature verification, PowerShell needs to be able to update certificate revocation lists. If this is not possible on your system, you can permanently disable signature checks and rely on the file hash checks exclusively by setting `NoSigChecks` to `1` in the .ini file under `[Settings]`:
+```ini
+[Settings]
+NoSigChecks=1
+```
 ### Server certificate revocation
 You may encounter a `Security Alert: Revocation information for the Security certificate for this site is not available` Windows dialog or a `The server certificate revocation check for (...) has failed` warning by WinUpdater. This can happen if you have enabled the non-default option `Check for server certificate revocation` in the Windows `Internet Options` (tab `Advanced`). You can tell WinUpdater to automatically continue when this dialog pops up by setting `IgnoreCrlErrors` to `1` in the .ini file under `[Settings]`:
 ```ini
